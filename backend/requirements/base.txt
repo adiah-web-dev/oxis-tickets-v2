@@ -1,0 +1,10 @@
+Django>=5.2,<6.0
+djangorestframework
+djangorestframework-simplejwt
+django-filter
+django-cors-headers
+psycopg[binary]
+Pillow
+qrcode[pil]
+python-dotenv
+gunicorn
