@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
@@ -50,6 +51,20 @@ class Event(models.Model):
 			self.slug = slugify(self.name)
 
 		super().save(*args, **kwargs)
+
+	def clean(self):
+		errors = {}
+
+		if self.end_date and self.start_date:
+			if self.end_date <= self.start_date:
+				errors['end_date'] = 'End date must be after start date.'
+
+		if self.sales_start and self.sales_end:
+			if self.sales_end <= self.sales_start:
+				errors['sales_end'] = 'Sales end must be after sales start.'
+
+		if errors:
+			raise ValidationError(errors)
 
 	def __str__(self):
 		return self.name
@@ -103,6 +118,25 @@ class TicketType(models.Model):
 
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
+
+	def clean(self):
+		errors = {}
+
+		if self.price is not None and self.price < 0:
+			errors['price'] = 'Price cannot be negative.'
+
+		if self.max_per_order and self.quantity_available:
+			if self.max_per_order > self.quantity_available:
+				errors['max_per_order'] = (
+					'Maximum per order cannot exceed available quantity.'
+				)
+
+		if self.sale_start and self.sale_end:
+			if self.sale_end <= self.sale_start:
+				errors['sale_end'] = 'Sale end must be after sale start.'
+
+		if errors:
+			raise ValidationError(errors)
 
 	def __str__(self):
 		return f'{self.event.name} - {self.name}'
