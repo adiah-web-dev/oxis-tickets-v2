@@ -23,6 +23,7 @@ class Event(models.Model):
 	slug = models.SlugField(max_length=220, unique=True, blank=True)
 
 	description = models.TextField(blank=True)
+	banner_image = models.ImageField(upload_to='event_artwork/', blank=True, null=True)
 	venue = models.CharField(max_length=255)
 
 	start_date = models.DateTimeField()

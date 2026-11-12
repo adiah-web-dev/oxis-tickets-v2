@@ -14,12 +14,17 @@ class EventAdmin(admin.ModelAdmin):
 		'start_date',
 		'status',
 		'created_by',
+		'has_artwork',
 	)
 
 	list_filter = ('status', 'start_date')
 	search_fields = ('name', 'venue')
 	prepopulated_fields = {'slug': ('name',)}
 	inlines = [TicketTypeInline]
+
+	@admin.display(boolean=True, description='Has artwork')
+	def has_artwork(self, obj):
+		return bool(obj.banner_image)
 
 @admin.register(TicketType)
 class TicketTypeAdmin(admin.ModelAdmin):

@@ -1,212 +1,366 @@
+
 from io import BytesIO
-from xml.sax.saxutils import escape
+from html import escape
 
 import qrcode
+
+from PIL import Image, ImageOps
 
 from django.utils import timezone
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import inch
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    Image,
-    Table,
-    TableStyle,
-    HRFlowable,
-)
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import ParagraphStyle
+
 
 def generate_ticket_pdf(ticket):
-	buffer = BytesIO()
+    """
+    Generate a landscape, event-branded PDF ticket.
+    """
 
-	document = SimpleDocTemplate(
-		buffer,
-		pagesize=letter,
-		rightMargin=0.65 * inch,
-		leftMargin=0.65 * inch,
-		topMargin=0.5 * inch,
-		bottomMargin=0.5 * inch,
-		title=f'Ticket {ticket.ticket_code}',
-		author='Oxbridge International School',
-	)
+    width = 10 * inch
+    height = 4.25 * inch
 
-	styles = getSampleStyleSheet()
+    main_width = 7 * inch
+    stub_width = width - main_width
 
-	styles.add(ParagraphStyle(
-		name='SchoolTitle',
-		parent=styles['Title'],
-		fontSize=20,
-		leading=24,
-		alignment=TA_CENTER,
-		textColor=colors.HexColor('#172554'),
-		spaceAfter=4,
-	))
+    buffer = BytesIO()
 
-	styles.add(ParagraphStyle(
-		name="EventTitle",
-		parent=styles["Heading1"],
-		fontSize=17,
-		leading=21,
-		alignment=TA_CENTER,
-		textColor=colors.HexColor("#1E40AF"),
-		spaceBefore=12,
-		spaceAfter=12,
-	))
+    pdf = canvas.Canvas(buffer, pagesize=(width, height))
 
-	styles.add(ParagraphStyle(
-		name="TicketCode",
-		parent=styles["Heading2"],
-		fontSize=13,
-		alignment=TA_CENTER,
-		textColor=colors.HexColor("#172554"),
-	))
+    order = ticket.order_item.order
+    event = order.event
+    ticket_type = ticket.order_item.ticket_type
 
-	styles.add(ParagraphStyle(
-		name="SmallCenter",
-		parent=styles["Normal"],
-		alignment=TA_CENTER,
-		fontSize=9,
-		textColor=colors.HexColor("#64748B"),
-	))
+    # -------------------------------------------------
+    # Colours
+    # -------------------------------------------------
 
-	order = ticket.order_item.order
-	event = order.event
-	ticket_type = ticket.order_item.ticket_type
+    navy = colors.HexColor("#14213D")
+    gold = colors.HexColor("#D4AF37")
+    white = colors.white
+    dark = colors.HexColor("#202938")
+    muted = colors.HexColor("#64748B")
 
-	story = []
+    # -------------------------------------------------
+    # Main ticket background
+    # -------------------------------------------------
 
-	# School heading
+    pdf.setFillColor(navy)
+    pdf.rect(0, 0, main_width, height, fill=1, stroke=0)
 
-	story.append(Paragraph(
-		"OXBRIDGE INTERNATIONAL SCHOOL",
-		styles["SchoolTitle"]
-	))
+    artwork_loaded = False
 
-	story.append(Paragraph(
-		"OFFICIAL EVENT TICKET",
-		styles["SmallCenter"]
-	))
+    # -------------------------------------------------
+    # Event artwork
+    # -------------------------------------------------
 
-	story.append(Spacer(1, 15))
+    if event.banner_image:
+        try:
+            event.banner_image.open("rb")
 
-	story.append(HRFlowable(
-		width="100%",
-		thickness=1,
-		color=colors.HexColor("#CBD5E1")
-	))
+            with Image.open(event.banner_image.file) as source:
+                artwork = ImageOps.fit(
+                    source.convert("RGB"),
+                    (1600, 960),
+                    method=Image.Resampling.LANCZOS,
+                )
 
-	# Event details
-	story.append(Paragraph(
-		escape(event.name),
-		styles["EventTitle"]
-	))
+                image_buffer = BytesIO()
+                artwork.save(image_buffer, format="JPEG", quality=90)
+                image_buffer.seek(0)
 
-	event_date = timezone.localtime(event.start_date).strftime(
-		"%A, %d %B %Y"
-	)
+            pdf.drawImage(
+                ImageReader(image_buffer),
+                0,
+                0,
+                width=main_width,
+                height=height,
+                preserveAspectRatio=False,
+            )
 
-	event_time = timezone.localtime(event.start_date).strftime(
-		"%I:%M %p"
-	)
+            artwork_loaded = True
 
-	details = [
-		["DATE", event_date],
-		["TIME", event_time],
-		["VENUE", event.venue],
-		["TICKET TYPE", ticket_type.name],
-		["PURCHASER", order.customer_name],
-	]
+        except Exception:
+            # Continue with the fallback design if the image
+            # is missing or cannot be processed.
+            artwork_loaded = False
 
-	detail_table = Table(
-		[
-			[
-				Paragraph(
-					f"<b>{escape(str(label))}</b>",
-					styles["Normal"]
-				),
-				Paragraph(
-					escape(str(value)),
-					styles["Normal"]
-				),
-			]
-			for label, value in details
-		],
-		colWidths=[1.5 * inch, 4.5 * inch]
-	)
+        finally:
+            try:
+                event.banner_image.close()
+            except Exception:
+                pass
 
-	detail_table.setStyle(TableStyle([
-		("BACKGROUND", (0, 0), (0, -1),
-			colors.HexColor("#F1F5F9")),
-		("TEXTCOLOR", (0, 0), (-1, -1),
-			colors.HexColor("#1E293B")),
-		("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-		("LEFTPADDING", (0, 0), (-1, -1), 10),
-		("RIGHTPADDING", (0, 0), (-1, -1), 10),
-		("TOPPADDING", (0, 0), (-1, -1), 10),
-		("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-		("LINEBELOW", (0, 0), (-1, -1), 0.5,
-			colors.HexColor("#CBD5E1")),
-	]))
+    # -------------------------------------------------
+    # Fallback artwork
+    # -------------------------------------------------
 
-	story.append(detail_table)
-	story.append(Spacer(1, 20))
+    if not artwork_loaded:
+        pdf.setFillColor(navy)
+        pdf.rect(0, 0, main_width, height, fill=1, stroke=0)
 
-	# Generate QR code in memory
-	qr = qrcode.QRCode(
-		version=None,
-		error_correction=qrcode.constants.ERROR_CORRECT_M,
-		box_size=10,
-		border=4,
-	)
+        pdf.setFillColor(colors.HexColor("#23395D"))
+        pdf.circle(
+            main_width - 0.5 * inch,
+            height - 0.3 * inch,
+            2.2 * inch,
+            fill=1,
+            stroke=0,
+        )
 
-	qr.add_data(ticket.ticket_code)
-	qr.make(fit=True)
+        pdf.setFillColor(colors.HexColor("#304B70"))
+        pdf.circle(
+            main_width - 1.8 * inch,
+            0.2 * inch,
+            1.8 * inch,
+            fill=1,
+            stroke=0,
+        )
 
-	qr_image = qr.make_image(
-		fill_color="black",
-		back_color="white"
-	)
+        pdf.setStrokeColor(gold)
+        pdf.setLineWidth(2)
+        pdf.line(
+            0.4 * inch,
+            0.35 * inch,
+            main_width - 0.4 * inch,
+            0.35 * inch,
+        )
 
-	qr_buffer = BytesIO()
-	qr_image.save(qr_buffer, format="PNG")
-	qr_buffer.seek(0)
+    # -------------------------------------------------
+    # Dark overlay for readable text
+    # -------------------------------------------------
 
-	qr_flowable = Image(
-		qr_buffer,
-		width=1.8 * inch,
-		height=1.8 * inch
-	)
+    pdf.saveState()
+    pdf.setFillColor(colors.HexColor("#000000"))
+    pdf.setFillAlpha(0.65)
+    pdf.rect(
+        0,
+        0,
+        main_width,
+        height,
+        fill=1,
+        stroke=0,
+    )
+    pdf.restoreState()
 
-	story.append(qr_flowable)
-	story.append(Spacer(1, 8))
+    # -------------------------------------------------
+    # School branding
+    # -------------------------------------------------
 
-	story.append(Paragraph(
-		escape(ticket.ticket_code),
-		styles["TicketCode"]
-	))
+    pdf.setFillColor(gold)
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(
+        0.4 * inch,
+        height - 0.45 * inch,
+        "OXBRIDGE INTERNATIONAL SCHOOL",
+    )
 
-	story.append(Spacer(1, 15))
+    pdf.setFillColor(white)
+    pdf.setFont("Helvetica", 7)
+    pdf.drawRightString(
+        main_width - 0.4 * inch,
+        height - 0.45 * inch,
+        "OFFICIAL ADMISSION TICKET",
+    )
 
-	story.append(HRFlowable(
-		width="100%",
-		thickness=1,
-		color=colors.HexColor("#CBD5E1")
-	))
+    # -------------------------------------------------
+    # Event name
+    # -------------------------------------------------
 
-	story.append(Spacer(1, 10))
+    title_style = ParagraphStyle(
+        "EventTitle",
+        fontName="Helvetica-Bold",
+        fontSize=25,
+        leading=29,
+        textColor=white,
+    )
 
-	story.append(Paragraph(
-		"Please present this QR code at the entrance. "
-		"Each ticket permits one entry only. "
-		"Keep this ticket secure and do not share its QR code.",
-		styles["SmallCenter"]
-	))
+    title = Paragraph(
+        escape(event.name),
+        title_style,
+    )
 
-	document.build(story)
+    title_width = main_width - 0.8 * inch
+    title_height = 1.2 * inch
 
-	buffer.seek(0)
-	return buffer
+    actual_width, actual_height = title.wrap(
+        title_width,
+        title_height,
+    )
+
+    title.drawOn(
+        pdf,
+        0.4 * inch,
+        2.25 * inch,
+    )
+
+    # -------------------------------------------------
+    # Event details
+    # -------------------------------------------------
+
+    event_date = timezone.localtime(
+        event.start_date
+    ).strftime("%A, %d %B %Y")
+
+    event_time = timezone.localtime(
+        event.start_date
+    ).strftime("%I:%M %p")
+
+    pdf.setFillColor(white)
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(
+        0.4 * inch,
+        1.35 * inch,
+        event_date,
+    )
+
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(
+        0.4 * inch,
+        1.05 * inch,
+        f"{event_time}  |  {event.venue[:70]}",
+    )
+
+    # -------------------------------------------------
+    # Purchaser
+    # -------------------------------------------------
+
+    pdf.setFillColor(gold)
+    pdf.setFont("Helvetica-Bold", 7)
+    pdf.drawString(
+        0.4 * inch,
+        0.62 * inch,
+        "ADMITTED TO",
+    )
+
+    pdf.setFillColor(white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(
+        0.4 * inch,
+        0.42 * inch,
+        order.customer_name[:55],
+    )
+
+    # -------------------------------------------------
+    # Ticket stub
+    # -------------------------------------------------
+
+    pdf.setFillColor(colors.HexColor("#F8FAFC"))
+    pdf.rect(
+        main_width,
+        0,
+        stub_width,
+        height,
+        fill=1,
+        stroke=0,
+    )
+
+    # Perforation line
+    pdf.saveState()
+    pdf.setStrokeColor(muted)
+    pdf.setDash(3, 3)
+    pdf.setLineWidth(1)
+    pdf.line(
+        main_width,
+        0,
+        main_width,
+        height,
+    )
+    pdf.restoreState()
+
+    # Perforation circles
+    pdf.setFillColor(colors.HexColor("#F8FAFC"))
+    pdf.circle(main_width, height, 0.09 * inch, fill=1, stroke=0)
+    pdf.circle(main_width, 0, 0.09 * inch, fill=1, stroke=0)
+
+    # Stub heading
+    pdf.setFillColor(navy)
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawCentredString(
+        main_width + stub_width / 2,
+        height - 0.45 * inch,
+        "ADMIT ONE",
+    )
+
+    # -------------------------------------------------
+    # QR code
+    # -------------------------------------------------
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=2,
+    )
+
+    qr.add_data(ticket.ticket_code)
+    qr.make(fit=True)
+
+    qr_image = qr.make_image(
+        fill_color="black",
+        back_color="white",
+    )
+
+    qr_buffer = BytesIO()
+    qr_image.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+
+    qr_size = 1.55 * inch
+
+    qr_x = main_width + (stub_width - qr_size) / 2
+    qr_y = 1.35 * inch
+
+    pdf.drawImage(
+        ImageReader(qr_buffer),
+        qr_x,
+        qr_y,
+        width=qr_size,
+        height=qr_size,
+    )
+
+    # -------------------------------------------------
+    # Ticket code
+    # -------------------------------------------------
+
+    pdf.setFillColor(navy)
+    pdf.setFont("Helvetica-Bold", 9)
+
+    pdf.drawCentredString(
+        main_width + stub_width / 2,
+        1.05 * inch,
+        ticket.ticket_code,
+    )
+
+    # Ticket type
+    pdf.setFillColor(muted)
+    pdf.setFont("Helvetica", 8)
+
+    pdf.drawCentredString(
+        main_width + stub_width / 2,
+        0.78 * inch,
+        ticket_type.name[:35],
+    )
+
+    # Entry instruction
+    pdf.setFont("Helvetica", 6)
+    pdf.drawCentredString(
+        main_width + stub_width / 2,
+        0.35 * inch,
+        "Present QR code at entry",
+    )
+
+    # -------------------------------------------------
+    # Finish PDF
+    # -------------------------------------------------
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+
+    return buffer
