@@ -1,14 +1,15 @@
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
+from rest_framework import generics
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.permissions import IsEventManagerOrScanner
+from accounts.permissions import IsEventManagerOrScanner, IsEventManagerOrCashier
 from .models import Ticket
-from .serializers import TicketCheckInSerializer
+from .serializers import TicketCheckInSerializer, TicketListSerializer, TicketDetailSerializer
 
 class TicketCheckInView(APIView):
 	permission_classes = [IsAuthenticated, IsEventManagerOrScanner]
@@ -91,3 +92,67 @@ class TicketCheckInView(APIView):
 			},
 			status=status.HTTP_200_OK
 		)
+
+class TicketListView(generics.ListAPIView):
+	serializer_class = TicketListSerializer
+	permission_classes = [
+		IsAuthenticated,
+		IsEventManagerOrCashier
+	]
+
+	def get_queryset(self):
+		queryset = Ticket.objects.select_related(
+			'order_item',
+			'order_item__order',
+			'order_item__order__event',
+			'order_item__ticket_type',
+		)
+
+		event_id = self.request.query_params.get('event')
+		order_id = self.request.query_params.get('order')
+		ticket_status = self.request.query_params.get('status')
+		search = self.request.query_params.get('search')
+
+		if event_id:
+			queryset = queryset.filter(
+				order_item__order__event_id=event_id
+			)
+
+		if order_id:
+			queryset = queryset.filter(
+				order_item__order_id=order_id
+			)
+
+		if ticket_status:
+			queryset = queryset.filter(status=ticket_status)
+
+		if search:
+			queryset = queryset.filter(
+				models.Q(ticket_code__icontains=search)
+				| models.Q(
+					order_item__order__order_number__icontains=search
+				)
+				| models.Q(
+					order_item__order__customer_name__icontains=search
+				)
+				| models.Q(
+					order_item__order__customer_email__icontains=search
+				)
+			)
+		return queryset
+
+class TicketDetailView(generics.RetrieveAPIView):
+	serializer_class = TicketDetailSerializer
+	permission_classes = [
+		IsAuthenticated,
+		IsEventManagerOrCashier
+	]
+	lookup_field = 'id'
+
+	queryset = Ticket.objects.select_related(
+		'order_item',
+		'order_item__order',
+		'order_item__order__event',
+		'order_item__ticket_type',
+		'checked_in_by',
+	)
