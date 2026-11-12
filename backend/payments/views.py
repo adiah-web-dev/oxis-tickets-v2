@@ -22,7 +22,7 @@ from .serializers import (
 	PaymentDetailSerializer,
 )
 
-from tickets.services import issue_tickets_for_order
+from tickets.services import issue_tickets_for_order, send_ticket_email_for_order
 
 class PaymentListView(generics.ListAPIView):
 	serializer_class = PaymentDetailSerializer
@@ -182,6 +182,11 @@ class PaymentVerifyView(APIView):
 			order.save(update_fields=['status', 'updated_at'])
 
 			issue_tickets_for_order(order.id)
+
+			# Send the email only after the transaction commits.
+			transaction.on_commit(
+				lambda order_id=order.id: send_ticket_email_for_order(order_id)
+			)
 
 		return Response({
 			'payment': PaymentDetailSerializer(payment).data,
