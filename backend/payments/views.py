@@ -22,6 +22,8 @@ from .serializers import (
 	PaymentDetailSerializer,
 )
 
+from tickets.services import issue_tickets_for_order
+
 class PaymentListView(generics.ListAPIView):
 	serializer_class = PaymentDetailSerializer
 	permission_classes = [IsEventManagerOrCashier]
@@ -178,6 +180,8 @@ class PaymentVerifyView(APIView):
 		if new_verified_total == order.total:
 			order.status = Order.Status.CONFIRMED
 			order.save(update_fields=['status', 'updated_at'])
+
+			issue_tickets_for_order(order.id)
 
 		return Response({
 			'payment': PaymentDetailSerializer(payment).data,
