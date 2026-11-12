@@ -22,9 +22,42 @@ class EventAdmin(admin.ModelAdmin):
 	prepopulated_fields = {'slug': ('name',)}
 	inlines = [TicketTypeInline]
 
+	fieldsets = (
+		('Event Details', {
+			'fields': (
+				'name',
+				'slug',
+				'description',
+				'banner_image',
+				'venue',
+				'created_by',
+			)
+		}),
+		('Schedule', {
+			'fields': (
+				'start_date',
+				'end_date',
+				'sales_start',
+				'sales_end',
+				'status',
+			)
+		}),
+		('Ticket Appearance', {
+			'fields': (
+				'ticket_text_color',
+				'ticket_overlay_opacity',
+			),
+			'description': (
+				'Customise the text and overlay displayed over '
+				'the event artwork on PDF tickets.'
+			),
+		}),
+	)
+
 	@admin.display(boolean=True, description='Has artwork')
 	def has_artwork(self, obj):
 		return bool(obj.banner_image)
+
 
 @admin.register(TicketType)
 class TicketTypeAdmin(admin.ModelAdmin):

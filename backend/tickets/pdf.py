@@ -36,6 +36,21 @@ def generate_ticket_pdf(ticket):
     event = order.event
     ticket_type = ticket.order_item.ticket_type
 
+    # Event-specific ticket styling
+    try:
+        main_text_color = colors.HexColor(event.ticket_text_color)
+    except (ValueError, TypeError):
+        main_text_color = colors.white
+
+    try:
+        overlay_opacity = max (
+            0.0,
+            min(float(event.ticket_overlay_opacity), 0.85),
+        )
+
+    except (ValueError, TypeError):
+        overlay_opacity = 0.45
+
     # -------------------------------------------------
     # Colours
     # -------------------------------------------------
@@ -136,8 +151,8 @@ def generate_ticket_pdf(ticket):
     # -------------------------------------------------
 
     pdf.saveState()
-    pdf.setFillColor(colors.HexColor("#000000"))
-    pdf.setFillAlpha(0.65)
+    pdf.setFillColor(colors.black)
+    pdf.setFillAlpha(overlay_opacity)
     pdf.rect(
         0,
         0,
@@ -160,7 +175,7 @@ def generate_ticket_pdf(ticket):
         "OXBRIDGE INTERNATIONAL SCHOOL",
     )
 
-    pdf.setFillColor(white)
+    pdf.setFillColor(main_text_color)
     pdf.setFont("Helvetica", 7)
     pdf.drawRightString(
         main_width - 0.4 * inch,
@@ -177,7 +192,7 @@ def generate_ticket_pdf(ticket):
         fontName="Helvetica-Bold",
         fontSize=25,
         leading=29,
-        textColor=white,
+        textColor=main_text_color,
     )
 
     title = Paragraph(
@@ -211,7 +226,7 @@ def generate_ticket_pdf(ticket):
         event.start_date
     ).strftime("%I:%M %p")
 
-    pdf.setFillColor(white)
+    pdf.setFillColor(main_text_color)
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawString(
         0.4 * inch,
@@ -238,7 +253,7 @@ def generate_ticket_pdf(ticket):
         "ADMITTED TO",
     )
 
-    pdf.setFillColor(white)
+    pdf.setFillColor(main_text_color)
     pdf.setFont("Helvetica", 10)
     pdf.drawString(
         0.4 * inch,
