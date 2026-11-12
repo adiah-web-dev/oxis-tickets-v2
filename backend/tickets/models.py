@@ -63,3 +63,42 @@ class Ticket(models.Model):
 	@property
 	def order(self):
 		return self.order_item.order
+
+class TicketDelivery(models.Model):
+	class Status(models.TextChoices):
+		PENDING = 'pending', 'Pending'
+		SENT = 'sent', 'Sent'
+		FAILED = 'failed', 'Failed'
+
+	id = models.UUIDField(
+		primary_key=True,
+		default=uuid.uuid4,
+		editable=False,
+	)
+
+	order = models.OneToOneField(
+		'orders.Order',
+		on_delete=models.PROTECT,
+		related_name='ticket_delivery',
+	)
+
+	recipient_email = models.EmailField()
+
+	status = models.CharField(
+		max_length=20,
+		choices=Status.choices,
+		default=Status.PENDING,
+	)
+
+	attempts = models.PositiveIntegerField(default=0)
+	sent_at = models.DateTimeField(null=True, blank=True)
+	last_error = models.TextField(blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['-created_at']
+
+	def __str__(self):
+		return f'{self.order.order_number} - {self.status}'

@@ -1,7 +1,13 @@
 import uuid
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import (
+	MaxValueValidator,
+	MinValueValidator,
+	RegexValidator,
+)
 from django.db import models
 from django.utils.text import slugify
 
@@ -24,6 +30,27 @@ class Event(models.Model):
 
 	description = models.TextField(blank=True)
 	banner_image = models.ImageField(upload_to='event_artwork/', blank=True, null=True)
+	ticket_text_color = models.CharField(
+		max_length=7,
+		default='#FFFFFF',
+		validators=[
+			RegexValidator(
+				regex=r'^#[0-9A-Fa-f]{6}$',
+				message='Enter a valid hex colour, e.g. #FFFFFF.',
+			)
+		],
+	)
+
+	ticket_overlay_opacity = models.DecimalField(
+		max_digits=3,
+		decimal_places=2,
+		default=Decimal('0.45'),
+		validators=[
+			MinValueValidator(Decimal('0.00')),
+			MaxValueValidator(Decimal('0.85')),
+		]
+	)
+
 	venue = models.CharField(max_length=255)
 
 	start_date = models.DateTimeField()
