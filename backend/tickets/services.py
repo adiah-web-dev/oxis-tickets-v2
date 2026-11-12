@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
@@ -88,6 +90,7 @@ def send_ticket_email_for_order(order_id):
 		if (
 			delivery.status == TicketDelivery.Status.PENDING
 			and delivery.attempts > 0
+			and delivery.updated_at > timezone.now() - timedelta(minutes=10)
 		):
 			return False
 

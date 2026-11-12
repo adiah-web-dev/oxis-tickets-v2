@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Ticket
+from .models import Ticket, TicketDelivery
 
 class TicketCheckInSerializer(serializers.Serializer):
 	ticket_code = serializers.CharField(
@@ -65,3 +65,31 @@ class TicketDetailSerializer(TicketListSerializer):
 			'checked_in_at',
 			'checked_in_by_email',
 		]
+
+class TicketDeliverySerializer(serializers.ModelSerializer):
+	order_number = serializers.CharField(
+		source='order.order_number',
+		read_only=True,
+	)
+
+	order_status = serializers.CharField(
+		source='order.status',
+		read_only=True,
+	)
+
+	class Meta:
+		model = TicketDelivery
+		fields = [
+			'id',
+			'order',
+			'order_number',
+			'order_status',
+			'recipient_email',
+			'status',
+			'attempts',
+			'sent_at',
+			'last_error',
+			'created_at',
+			'updated_at',
+		]
+		read_only_fields = fields

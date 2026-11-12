@@ -1,4 +1,5 @@
 from io import BytesIO
+from datetime import timedelta
 
 import qrcode
 
@@ -12,11 +13,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
 
-from accounts.permissions import IsEventManagerOrScanner, IsEventManagerOrCashier
-from .models import Ticket
+from accounts.permissions import IsEventManager, IsEventManagerOrScanner, IsEventManagerOrCashier
+from .models import Ticket, TicketDelivery
 from .pdf import generate_ticket_pdf
-from .serializers import TicketCheckInSerializer, TicketListSerializer, TicketDetailSerializer
+from .serializers import TicketCheckInSerializer, TicketListSerializer, TicketDetailSerializer, TicketDeliverySerializer
+from .services import send_ticket_email_for_order
 
 class TicketCheckInView(APIView):
 	permission_classes = [IsAuthenticated, IsEventManagerOrScanner]
@@ -258,3 +261,79 @@ class TicketPDFView(APIView):
 		)
 
 		return response
+
+class TicketDeliveryListView(generics.ListAPIView):
+	serializer_class = TicketDeliverySerializer
+	permission_classes = [IsEventManager]
+
+	def get_queryset(self):
+		queryset = TicketDelivery.objects.select_related(
+			'order',
+			'order__event',
+		).all()
+
+		status_filter = self.request.query_params.get('status')
+		order_id = self.request.query_params.get('order')
+		event_id = self.request.query_params.get('event')
+
+		if status_filter:
+			queryset = queryset.filter(status=status_filter)
+
+		if order_id:
+			queryset = queryset.filter(order_id=order_id)
+
+		if event_id:
+			queryset = queryset.filter(order__event_id=event_id)
+
+		return queryset
+
+
+class TicketDeliveryDetailView(generics.RetrieveAPIView):
+	serializer_class = TicketDeliverySerializer
+	permission_classes = [IsEventManager]
+	lookup_field = 'id'
+	lookup_url_kwarg = 'id'
+	queryset = TicketDelivery.objects.select_related(
+		'order',
+		'order__event',
+	).all()
+
+class TicketDeliveryRetryView(generics.GenericAPIView):
+	permission_classes = [IsEventManager]
+	queryset = TicketDelivery.objects.select_related('order').all()
+
+	lookup_field = 'id'
+	lookup_url_kwarg = 'id'
+
+	def post(self, request, *args, **kwargs):
+		delivery = self.get_object()
+
+		if delivery.status == TicketDelivery.Status.SENT:
+			raise ValidationError({
+				'delivery': 'This order\'s tickets have already been emailed.'
+			})
+
+		if (
+			delivery.status == TicketDelivery.Status.PENDING
+			and delivery.attemps == 0
+		):
+			raise ValidationError({
+				'delivery': 'No previous delivery attempt exists.'
+			})
+
+		if (
+			delivery.status == TicketDelivery.Status.PENDING
+			and delivery.updated_at > timezone.now() - timedelta(minutes=10)
+		):
+			raise ValidationError({
+				'delivery': 'An email delivery attempt is already in progress.'
+			})
+
+		success = send_ticket_email_for_order(delivery.order_id)
+
+		delivery.refresh_from_db()
+
+		return Response({
+			'success': success,
+			'delivery': TicketDeliverySerializer(delivery).data,
+		}, status=status.HTTP_200_OK)
