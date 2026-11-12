@@ -1,4 +1,10 @@
+from io import BytesIO
+
+import qrcode
+
 from django.db import models, transaction
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import generics
@@ -156,3 +162,50 @@ class TicketDetailView(generics.RetrieveAPIView):
 		'order_item__ticket_type',
 		'checked_in_by',
 	)
+
+class TicketQRCodeView(APIView):
+	permission_classes = [
+		IsAuthenticated,
+		IsEventManagerOrCashier
+	]
+
+	def get(self, request, id):
+		ticket = get_object_or_404(
+			Ticket.objects.select_related(
+				'order_item',
+				'order_item__order'
+			),
+			id=id
+		)
+
+		# Generate a QR code containing only the ticket code.
+		qr = qrcode.QRCode(
+			version=None,
+			error_correction=qrcode.constants.ERROR_CORRECT_M,
+			box_size=10,
+			border=4,
+		)
+
+		qr.add_data(ticket.ticket_code)
+		qr.make(fit=True)
+
+		image = qr.make_image(
+			fill_color='black',
+			back_color='white'
+		)
+
+		# Convert the image into PNG bytes.
+		buffer = BytesIO()
+		image.save(buffer, format='PNG')
+		buffer.seek(0)
+
+		response = HttpResponse(
+			buffer.getvalue(),
+			content_type='image/png'
+		)
+
+		response['Content-Disposition'] = (
+			f'inline; filename="ticket-{ticket.ticket_code}.png"'
+		)
+
+		return response
