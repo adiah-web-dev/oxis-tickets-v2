@@ -5,7 +5,13 @@ from .models import Order, OrderItem
 class OrderItemInline(admin.TabularInline):
 	model = OrderItem
 	extra = 0
-	readonly_fields = ['id', 'line_total']
+	readonly_fields = ['id', 'line_total_display']
+
+	@admin.display(description='Line Total')
+	def line_total_display(self, obj):
+		if obj:
+			return obj.line_total
+		return '-'
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
