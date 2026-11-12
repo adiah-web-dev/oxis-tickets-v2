@@ -8,3 +8,4 @@ Pillow
 qrcode[pil]
 python-dotenv
 gunicorn
+reportlab>=4.2

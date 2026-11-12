@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 
 from accounts.permissions import IsEventManagerOrScanner, IsEventManagerOrCashier
 from .models import Ticket
+from .pdf import generate_ticket_pdf
 from .serializers import TicketCheckInSerializer, TicketListSerializer, TicketDetailSerializer
 
 class TicketCheckInView(APIView):
@@ -206,6 +207,54 @@ class TicketQRCodeView(APIView):
 
 		response['Content-Disposition'] = (
 			f'inline; filename="ticket-{ticket.ticket_code}.png"'
+		)
+
+		return response
+
+class TicketPDFView(APIView):
+	permission_classes = [
+		IsAuthenticated,
+		IsEventManagerOrCashier
+	]
+
+	def get(self, request, id):
+		ticket = get_object_or_404(
+			Ticket.objects.select_related(
+				'order_item',
+				'order_item__order',
+				'order_item__order__event',
+				'order_item__ticket_type',
+			),
+			id=id
+		)
+
+		if ticket.status == Ticket.Status.CANCELLED:
+			return Response(
+				{
+					'success': False,
+					'message': 'Cannot generate a PDF for a cancelled ticket.'
+				},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+
+		if ticket.order_item.order.status != 'confirmed':
+			return Response(
+				{
+					'success': False,
+					'message': 'Tickets can only be downloaded for confirmed orders.'
+				},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+
+		pdf_buffer = generate_ticket_pdf(ticket)
+
+		response = HttpResponse(
+			pdf_buffer.getvalue(),
+			content_type='application/pdf'
+		)
+
+		response['Content-Disposition'] = (
+			f'attachment; filename="ticket-{ticket.ticket_code}.pdf"'
 		)
 
 		return response
