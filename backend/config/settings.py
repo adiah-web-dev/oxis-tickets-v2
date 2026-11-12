@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'events.apps.EventsConfig',
     'orders.apps.OrdersConfig',
     'payments.apps.PaymentsConfig',
+    'tickets.apps.TicketsConfig',
 ]
 
 MIDDLEWARE = [
