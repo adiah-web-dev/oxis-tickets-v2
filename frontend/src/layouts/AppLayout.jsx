@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-// import { TopBar } from "../commponents/layout/Topbar";
-// import { Sidebar } from "../components/layout/Sidebar";
+import { Sidebar } from "../components/layout/Sidebar";
+import { TopBar } from "../components/layout/TopBar";
 import { Sheet, SheetContent, SheetTitle } from "../components/ui/Sheet";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { cn } from "../lib/utils";
@@ -26,11 +26,11 @@ export function AppLayout() {
           collapsed ? "w-[68px]" : "w-64",
         )}
       >
-        {/* <Sidebar
-          collapsed={collpsed}
+        <Sidebar
+          collapsed={collapsed}
           onCollapse={isDesktop}
           onToggleCollapse={() => setUserCollapsed((c) => !c)}
-        /> */}
+        />
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -40,12 +40,12 @@ export function AppLayout() {
           showCloseButton={false}
         >
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          {/* <Sidebar onNavigate={() => setMobileOpen(false)} /> */}
+          <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-co">
-        {/* <TopBar onOpenNav={() => setMobileOpen(true)} /> */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar onOpenNav={() => setMobileOpen(true)} />
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
         </main>
