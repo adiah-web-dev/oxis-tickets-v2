@@ -78,7 +78,7 @@ export function DashboardPage() {
             {can("checkIn") && (
               <Button variant="outline" asChild>
                 <Link to="/scanner">
-                  <ScanLine className="size-4" aria-hiden /> Scanner
+                  <ScanLine className="size-4" aria-hidden /> Scanner
                 </Link>
               </Button>
             )}

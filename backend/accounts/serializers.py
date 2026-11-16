@@ -14,10 +14,12 @@ class LoginSerializer(TokenObtainPairSerializer):
 		token['role'] = user.role
 		token['first_name'] = user.first_name
 		token['last_name'] = user.last_name
+		token['is_superuser'] = user.is_superuser
 
 		return token
 
 class UserSerializer(serializers.ModelSerializer):
+	is_superuser = serializers.BooleanField(read_only=True)
 	class Meta:
 		model = User
 		fields = [
@@ -25,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
 			'email',
 			'first_name',
 			'last_name',
-			'role'
+			'role',
+			'is_superuser',
 		]
 		read_only_fields = ['id', 'email', 'role']

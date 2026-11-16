@@ -63,7 +63,7 @@ export function TicketTypeFormDialog({
           name: values.name,
           price: Number(values.price).toFixed(2),
           description: values.description,
-          quantity: toNullableInt(values.quantity),
+          quantity_available: toNullableInt(values.quantity),
           max_per_order: toNullableInt(values.max_per_order),
         },
       },
