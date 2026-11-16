@@ -2,10 +2,10 @@ import { apiClient } from "../lib/apiClient";
 
 /** POST /api/auth/login/ */
 export async function login(email, password) {
-  const { data } =
-    (await apiClient.post) <
-    LoginResponse >
-    ("/api/auth/login/", { email, password });
+  const { data } = await apiClient.post("/api/auth/login/", {
+    email,
+    password,
+  });
   return data;
 }
 
