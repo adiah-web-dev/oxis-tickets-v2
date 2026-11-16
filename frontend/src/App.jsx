@@ -25,6 +25,8 @@ import { ScannerPage } from "./pages/ScannerPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TicketsPage } from "./pages/TicketsPage";
 
+const DATA_SOURCE = import.meta.env.VITE_API_MODE || "live";
+
 const guard = (capability, element) => (
   <RequireCapability capability={capability}>{element}</RequireCapability>
 );
@@ -36,7 +38,8 @@ function HomeRoute() {
   return <DashboardPage />;
 }
 
-export function App({ dataSource = "demo" }) {
+export function App() {
+  const dataSource = DATA_SOURCE;
   setApiMode(dataSource);
   const previous = useRef(dataSource);
 

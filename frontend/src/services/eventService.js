@@ -3,10 +3,10 @@ import { fetchAll } from "./normalize";
 
 /** GET /api/events/ (all pages). */
 export async function listEvents() {
-  const events = await fetchAll("/api/events/");
-  // return fetchAll("/api/events/");
-  console.log("Events returned by api", events);
-  return events;
+  // const events = await fetchAll("/api/events/");
+  return fetchAll("/api/events/");
+  // console.log("Events returned by api", events);
+  // return events;
 }
 
 /** GET /api/events/{id}/ */
