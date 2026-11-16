@@ -2,13 +2,16 @@ import { apiClient } from "../lib/apiClient";
 import { fetchAll } from "./normalize";
 
 /** GET /api/events/ (all pages). */
-export function listEvents() {
-  return fetchAll("/api/events/");
+export async function listEvents() {
+  const events = await fetchAll("/api/events/");
+  // return fetchAll("/api/events/");
+  console.log("Events returned by api", events);
+  return events;
 }
 
 /** GET /api/events/{id}/ */
 export async function getEvent(id) {
-  const { data } = (await apiClient.get) < SchoolEvent > `/api/events/${id}/`;
+  const { data } = await apiClient.get(`/api/events/${id}/`);
   return data;
 }
 

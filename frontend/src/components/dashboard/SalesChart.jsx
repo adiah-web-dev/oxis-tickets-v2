@@ -1,5 +1,13 @@
-import { AreaChart, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   formatCurrency,
   formatDate,
@@ -15,6 +23,7 @@ import {
   CardTitle,
 } from "../ui/Card";
 import { Skeleton } from "../ui/Skeleton";
+import { Tabs, TabsList, TabsTrigger } from "../ui/Tabs";
 
 export function SalesChart({ data, isLoading }) {
   const [metric, setMetric] = useState("tickets");
