@@ -1,6 +1,6 @@
 import { ArrowRight, Receipt } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { formatCurrency, formatRelative } from "../../lib/format";
+import { formatCurrency, formatRelative, initials } from "../../lib/format";
 import { orderStatusMeta } from "../../lib/status";
 import { EmptyState } from "../common/EmptyState";
 import { StatusBadge } from "../common/StatusBadge";

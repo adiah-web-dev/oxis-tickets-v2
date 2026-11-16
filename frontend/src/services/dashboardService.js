@@ -9,8 +9,8 @@ import { fetchAll } from "./normalize";
 export async function getDashboard(eventId) {
   const filter = eventId ? { event: eventId } : {};
   const [orders, tickets] = await Promise.all([
-    fetchAll < Order > ("/api/orders/", filter),
-    fetchAll < Ticket > ("/api/tickets/", filter),
+    fetchAll("/api/orders/", filter),
+    fetchAll("/api/tickets/", filter),
   ]);
 
   const confirmed = orders.filter((o) => o.status === "confirmed");
