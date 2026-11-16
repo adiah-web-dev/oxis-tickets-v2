@@ -1,6 +1,7 @@
+import axios from "axios";
 import { mockAdapter } from "./demo/mockAdapter";
 import { SESSION_EXPIRED_EVENT, tokenStorage } from "./tokenStorage";
-const env = (import.meta & { env }).env;
+const env = import.meta.env;
 
 export const API_BASE_URL = env?.VITE_API_URL || "http://localhost:8000";
 
