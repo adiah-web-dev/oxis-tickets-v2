@@ -29,16 +29,14 @@ export function TicketTypeFormDialog({
   onOpenChange,
 }) {
   const save = useSaveTicketType();
-  const [formError, setFormError] = (useState < string) | (null > null);
+  const [formError, setFormError] = useState(null);
   const {
     register,
     handleSubmit,
     reset,
     setError,
     formState: { errors },
-  } = useForm <
-  TicketTypeFormValues >
-  { resolver: zodResolver(ticketTypeSchema) };
+  } = useForm({ resolver: zodResolver(ticketTypeSchema) });
 
   useEffect(() => {
     if (!open) return;

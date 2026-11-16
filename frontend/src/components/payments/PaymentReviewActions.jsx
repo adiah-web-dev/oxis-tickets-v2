@@ -9,7 +9,7 @@ import { Button } from "../ui/Button";
 export function PaymentReviewActions({ payment }) {
   const verify = useVerifyPayment();
   const reject = useRejectPayment();
-  const [action, setAction] = (useState < "verify") | "reject" | (null > null);
+  const [action, setAction] = useState(null);
   const label = `${formatCurrency(payment.amount)}${payment.order_number ? ` for ${payment.order_number}` : ""}`;
 
   return (

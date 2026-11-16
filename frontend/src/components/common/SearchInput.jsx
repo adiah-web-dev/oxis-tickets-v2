@@ -6,6 +6,7 @@ export function SearchInput({
   value,
   onChange,
   placeholder = "Search...",
+  className,
   label = "Search",
 }) {
   return (

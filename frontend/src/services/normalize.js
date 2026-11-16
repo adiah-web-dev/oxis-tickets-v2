@@ -23,25 +23,27 @@ export function toList(data) {
 }
 
 /** Drops empty values so they are not sent as query params. */
-export function cleanParams(params) {
+export function cleanParams(params = {}) {
   return Object.fromEntries(
-    Object.entries(params).filter(
+    Object.entries(params ?? {}).filter(
       ([, v]) => v !== undefined && v !== null && v !== "",
     ),
   );
 }
 
 /** Follows DRF `next` links to collect every result (capped as a safety net). */
-export async function fetchAll(url, params, maxPages = 50) {
-  const { data } = await apiClient.get(url, { params: cleanParams(params) });
+export async function fetchAll(url, params = {}, maxPages = 50) {
+  const { data } = await apiClient.get(url, {
+    params: cleanParams(params ?? {}),
+  });
   if (Array.isArray(data)) return data;
-  const results = [...data.results];
-  let next = data.next;
+  const results = [...(data?.results ?? [])];
+  let next = data?.next;
   let pages = 1;
   while (next && pages < maxPages) {
     const res = await apiClient.get(next);
-    results.push(...res.data.results);
-    next = res.data.next;
+    results.push(...(res.data?.results ?? []));
+    next = res.data?.next;
     pages++;
   }
   return results;

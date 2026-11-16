@@ -17,7 +17,7 @@ function ticketFromError(error) {
 
 /** Scanner state machine. The backend is always the authority on validity and check-in. */
 export function useTicketScanner({ autoCheckIn, sound, canPreview }) {
-  const [state, setState] = useState < ScanState > { phase: "idle" };
+  const [state, setState] = useState({ phase: "idle" });
   const [log, setLog] = useState([]);
   const busyRef = useRef(false);
   const lastScanRef = useRef(null);

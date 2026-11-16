@@ -50,10 +50,10 @@ export async function deleteEvent(id) {
 
 /** GET /api/events/ticket-types/?event={id} */
 export async function listTicketTypes(eventId) {
-  const all =
-    (await fetchAll) <
-    TicketType >
-    ("/api/events/ticket-types/", eventId ? { event: eventId } : {});
+  const all = await fetchAll(
+    "/api/events/ticket-types/",
+    eventId ? { event: eventId } : {},
+  );
   // Defensive: keep only the requested event even if the filter isn't applied server-side.
   return eventId ? all.filter((t) => String(t.event) === String(eventId)) : all;
 }

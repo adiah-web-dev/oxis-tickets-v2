@@ -16,11 +16,11 @@ function describeCameraError(error) {
 
 /** Wraps @zxing/browser to decode QR codes from the device camera. */
 export function useQrScanner(onDecode) {
-  const videoRef = useRef < HTMLVideoElement > null;
-  const controlsRef = (useRef < IScannerControls) | (null > null);
+  const videoRef = useRef(null);
+  const controlsRef = useRef(null);
   const onDecodeRef = useRef(onDecode);
-  const [status, setStatus] = useState < CameraStatus > "idle";
-  const [error, setError] = (useState < string) | (null > null);
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState(null);
 
   onDecodeRef.current = onDecode;
 

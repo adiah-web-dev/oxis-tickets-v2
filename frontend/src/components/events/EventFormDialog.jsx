@@ -69,9 +69,9 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const isPending = createEvent.isPending || updateEvent.isPending;
-  const [banner, setBanner] = (useState < File) | (null > null);
-  const [preview, setPreview] = (useState < string) | (null > null);
-  const [formError, setFormError] = (useState < string) | (null > null);
+  const [banner, setBanner] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   const {
     register,
@@ -80,7 +80,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
     reset,
     setError,
     formState: { errors },
-  } = useForm < Values > { resolver: zodResolver(schema) };
+  } = useForm({ resolver: zodResolver(schema) });
   const textColor = useWatch({ control, name: "ticket_text_color" });
   const opacity = useWatch({ control, name: "ticket_overlay_opacity" });
 

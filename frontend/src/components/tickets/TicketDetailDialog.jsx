@@ -26,8 +26,7 @@ import { TicketCard } from "./TicketCard";
 export function TicketDetailDialog({ ticketId, onOpenChange }) {
   const { data: ticket, isLoading, error, refetch } = useTicket(ticketId);
   const { can } = useAuth();
-  const [pdfBusy, setPdfBusy] =
-    (useState < "view") | "download" | (null > null);
+  const [pdfBusy, setPdfBusy] = useState(null);
 
   const handlePdf = async (mode) => {
     if (!ticket) return;

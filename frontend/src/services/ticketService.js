@@ -37,11 +37,10 @@ export async function checkInTicket(ticketCode) {
 /** GET /api/tickets/{id}/qr/ — PNG image. */
 export async function getTicketQr(id) {
   try {
-    const { data } =
-      (await apiClient.get) <
-      Blob >
-      (`/api/tickets/${id}/qr/`,
-      { responseType: "blob", headers: { Accept: "image/png" } });
+    const { data } = await apiClient.get(`/api/tickets/${id}/qr/`, {
+      responseType: "blob",
+      headers: { Accept: "image/png" },
+    });
     return data;
   } catch (error) {
     return rethrowBlobError(error);

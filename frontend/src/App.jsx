@@ -11,19 +11,19 @@ import { AppLayout } from "./layouts/AppLayout";
 import { setApiMode } from "./lib/apiClient";
 import { homePathFor } from "./lib/permissions";
 import { queryClient } from "./lib/queryClient";
-// import { CreateOrderPage } from "./pages/CreateOrderPage";
-// import { EmailHistoryPage } from "./pages/EmailHistoryPage";
-// import { EventDetailPage } from "./pages/EventDetailPage";
-// import { EventsPage } from "./pages/EventsPage";
+import { CreateOrderPage } from "./pages/CreateOrderPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { EmailHistoryPage } from "./pages/EmailHistoryPage";
+import { EventDetailPage } from "./pages/EventDetailPage";
+import { EventsPage } from "./pages/EventsPage";
 import { LoginPage } from "./pages/LoginPage";
-// import { NotFoundPage } from "./pages/NotFoundPage";
-// import { OrderDetailPage } from "./pages/OrderDetailPage";
-// import { OrdersPage } from "./pages/OrdersPage";
-// import { PaymentsPage } from "./pages/PaymentsPage";
-// import { ScannerPage } from "./pages/ScannerPage";
-// import { SettingsPage } from "./pages/SettingsPage";
-// import { TicketsPage } from "./pages/TicketsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { OrderDetailPage } from "./pages/OrderDetailPage";
+import { OrdersPage } from "./pages/OrdersPage";
+import { PaymentsPage } from "./pages/PaymentsPage";
+import { ScannerPage } from "./pages/ScannerPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { TicketsPage } from "./pages/TicketsPage";
 
 const guard = (capability, element) => (
   <RequireCapability capability={capability}>{element}</RequireCapability>
@@ -65,7 +65,7 @@ export function App({ dataSource = "demo" }) {
                   }
                 >
                   <Route index element={<HomeRoute />} />
-                  {/* <Route
+                  <Route
                     path="events"
                     element={guard("viewEvents", <EventsPage />)}
                   />
@@ -102,7 +102,7 @@ export function App({ dataSource = "demo" }) {
                     element={guard("viewDeliveries", <EmailHistoryPage />)}
                   />
                   <Route path="settings" element={<SettingsPage />} />
-                  <Route path="*" element={<NotFoundPage />} /> */}
+                  <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Routes>
               <Toaster position="top-right" richColors closeButton />

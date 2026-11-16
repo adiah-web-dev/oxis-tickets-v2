@@ -33,9 +33,9 @@ export function TicketTypesTab({ eventId }) {
   const canManage = can("manageEvents");
   const { data, isLoading, error, refetch } = useTicketTypes(eventId);
   const remove = useDeleteTicketType();
-  const [editing, setEditing] = (useState < TicketType) | (null > null);
+  const [editing, setEditing] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [deleting, setDeleting] = (useState < TicketType) | (null > null);
+  const [deleting, setDeleting] = useState(null);
 
   const openForm = (type) => {
     setEditing(type);

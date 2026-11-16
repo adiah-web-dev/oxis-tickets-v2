@@ -42,7 +42,8 @@ function expireSession() {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const original = (error.config & { _retried }) | undefined;
+    // const original = (error.config & { _retried }) | undefined;
+    const original = error.config;
     if (
       !original ||
       error.response.status !== 401 ||
