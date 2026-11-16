@@ -35,7 +35,7 @@ export function useTicketQr(id, enabled = true) {
     enabled: !!id && enabled,
     staleTime: Infinity,
   });
-  const [url, setUrl] = (useState < string) | (null > null);
+  const [url, setUrl] = useState(null);
   useEffect(() => {
     if (!query.data) return;
     const objectUrl = URL.createObjectURL(query.data);

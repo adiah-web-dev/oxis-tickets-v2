@@ -17,8 +17,7 @@ import { paymentMethodLabels, paymentStatusMeta } from "../lib/status";
 export function PaymentsPage() {
   const { can } = useAuth();
   const canVerify = can("verifyPayments");
-  const [status, setStatus] =
-    useState < Filter > (canVerify ? "pending" : "all");
+  const [status, setStatus] = useState(canVerify ? "pending" : "all");
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching, error, refetch } = usePayments({
     status: status === "all" ? undefined : status,

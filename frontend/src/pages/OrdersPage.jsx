@@ -29,8 +29,7 @@ export function OrdersPage() {
   const { data: events } = useEvents();
   const event = events?.find((e) => e.id === selectedEventId);
   const [search, setSearch] = useState(params.get("search") ?? "");
-  const [status, setStatus] =
-    (useState < OrderStatus) | ("all" > (params.get("status") ?? "all"));
+  const [status, setStatus] = useState(params.get("status") ?? "all");
   const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search);
 
