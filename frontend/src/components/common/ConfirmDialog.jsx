@@ -39,7 +39,7 @@ export function ConfirmDialog({
             disabled={isPending}
           >
             {isPending && (
-              <Loader2 className="size-3.5 animate-spin" aria- hidden />
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
             )}
             {confirmLabel}
           </Button>
