@@ -111,7 +111,8 @@ export function SalesChart({ data, isLoading }) {
                     fontSize: 12,
                     boxShadow: "0 4px 12px rgba(15, 31, 61, 0.08)",
                   }}
-                  labelFormatter={(value) => [
+                  labelFormatter={(d) => formatDate(d, "EEE d MMM yyyy")}
+                  formatter={(value) => [
                     metric === "revenue"
                       ? formatCurrency(value)
                       : formatNumber(value),
