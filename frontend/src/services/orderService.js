@@ -11,7 +11,7 @@ export async function listOrders(params) {
 
 /** GET /api/orders/{id}/ */
 export async function getOrder(id) {
-  const { data } = (await apiClient.get) < Order > `/api/orders/${id}/`;
+  const { data } = await apiClient.get(`/api/orders/${id}/`);
   return data;
 }
 

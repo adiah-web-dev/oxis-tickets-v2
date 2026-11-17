@@ -47,7 +47,7 @@ export function RecordPaymentDialog({
   onOpenChange,
 }) {
   const record = useRecordPayment();
-  const [formError, setFormError] = (useState < string) | (null > null);
+  const [formError, setFormError] = useState(null);
   const {
     register,
     control,
@@ -55,7 +55,7 @@ export function RecordPaymentDialog({
     reset,
     setError,
     formState: { errors },
-  } = useForm < Values > { resolver: zodResolver(schema) };
+  } = useForm({ resolver: zodResolver(schema) });
 
   useEffect(() => {
     if (!open) return;

@@ -43,6 +43,11 @@ class EventSerializer(serializers.ModelSerializer):
 		read_only=True,
 	)
 
+	banner_image = serializers.ImageField(
+		required=False,
+		allow_null=True,
+	)
+
 	class Meta:
 		model = Event
 		fields = [
@@ -57,6 +62,9 @@ class EventSerializer(serializers.ModelSerializer):
 			'sales_end',
 			'status',
 			'created_by_email',
+			'banner_image',
+			'ticket_text_color',
+			'ticket_overlay_opacity',
 			'ticket_types',
 			'created_at',
 			'updated_at',
@@ -66,7 +74,7 @@ class EventSerializer(serializers.ModelSerializer):
 			'slug',
 			'created_by_email',
 			'ticket_types',
-			'create_at',
+			'created_at',
 			'updated_at',
 		]
 
