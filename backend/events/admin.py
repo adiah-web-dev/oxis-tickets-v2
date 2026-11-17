@@ -40,6 +40,7 @@ class EventAdmin(admin.ModelAdmin):
 				'sales_start',
 				'sales_end',
 				'status',
+				'payment_deadline_minutes',
 			)
 		}),
 		('Ticket Appearance', {

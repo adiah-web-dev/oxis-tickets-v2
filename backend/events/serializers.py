@@ -9,6 +9,7 @@ class TicketTypeSerializer(serializers.ModelSerializer):
 		allow_null=True,
 		min_value=1
 	)
+
 	class Meta:
 		model = TicketType
 		fields = [
@@ -53,6 +54,12 @@ class EventSerializer(serializers.ModelSerializer):
 		allow_null=True,
 	)
 
+	payment_deadline_minutes = serializers.IntegerField(
+		required=False,
+		allow_null=True,
+		min_value=1
+	)
+
 	class Meta:
 		model = Event
 		fields = [
@@ -73,6 +80,7 @@ class EventSerializer(serializers.ModelSerializer):
 			'ticket_types',
 			'created_at',
 			'updated_at',
+			'payment_deadline_minutes',
 		]
 		read_only_fields = [
 			'id',

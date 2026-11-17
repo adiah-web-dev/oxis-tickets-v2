@@ -1,5 +1,7 @@
+from datetime import timedelta
+
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -104,6 +106,12 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 		event = validated_data.pop('event')
 		now = timezone.now()
 
+		payment_deadline = (
+			now + timedelta(minutes=event.payment_deadline_minutes)
+			if event.payment_deadline_minutes is not None
+			else None
+		)
+
 		# Lock the event row. Prevent overselling
 		event = Event.objects.select_for_update().get(pk=event.pk)
 
@@ -134,7 +142,10 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 			OrderItem.objects.filter(
 				ticket_type_id__in=ticket_type_ids,
 				order__status=Order.Status.PENDING,
-				order__expires_at__gt=now,
+			)
+			.filter(
+				Q(order__expires_at__gt=timezone.now())
+				| Q(order__expires_at__isnull=True)
 			)
 			.values('ticket_type_id')
 			.annotate(total=Sum('quantity'))
@@ -203,6 +214,7 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 		order = Order.objects.create(
 			event=event,
 			created_by=self.context['request'].user,
+			expires_at=payment_deadline,
 			**validated_data,
 		)
 

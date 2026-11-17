@@ -53,7 +53,9 @@ class Order(models.Model):
 	)
 
 	expires_at = models.DateTimeField(
-		default=default_expiry
+		null=True,
+		blank=True,
+		default=None,
 	)
 
 	created_by = models.ForeignKey(

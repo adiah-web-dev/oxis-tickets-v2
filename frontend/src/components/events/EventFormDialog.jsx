@@ -41,6 +41,8 @@ const schema = z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #FFFFFF"),
     ticket_overlay_opacity: z.number().min(0).max(1),
+    has_payment_deadline: z.boolean(),
+    payment_deadline_minutes: z.string().regex(/^\d*$/, "Whole numbers only"),
   })
   .refine((v) => !v.start_date || !v.end_date || v.end_date > v.start_date, {
     path: ["end_date"],
@@ -49,7 +51,19 @@ const schema = z
   .refine(
     (v) => !v.sales_start || !v.sales_end || v.sales_end > v.sales_start,
     { path: ["sales_end"], message: "Sales must close after they open" },
-  );
+  )
+  .superRefine((v, ctx) => {
+    if (
+      v.has_payment_deadline &&
+      (!v.payment_deadline_minutes || Number(v.payment_deadline_minutes) < 1)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["payment_deadline_minutes"],
+        message: "Enter a valid payment deadline",
+      });
+    }
+  });
 
 const FIELDS = [
   "name",
@@ -62,6 +76,7 @@ const FIELDS = [
   "status",
   "ticket_text_color",
   "ticket_overlay_opacity",
+  "payment_deadline_minutes",
 ];
 
 export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
@@ -83,6 +98,10 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
   } = useForm({ resolver: zodResolver(schema) });
   const textColor = useWatch({ control, name: "ticket_text_color" });
   const opacity = useWatch({ control, name: "ticket_overlay_opacity" });
+  const hasPaymentDeadline = useWatch({
+    control,
+    name: "has_payment_deadline",
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -100,6 +119,10 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
       status: event?.status ?? "draft",
       ticket_text_color: event?.ticket_text_color || "#FFFFFF",
       ticket_overlay_opacity: Number(event?.ticket_overlay_opacity ?? 0.45),
+      has_payment_deadline:
+        event?.payment_deadline_minutes != null
+          ? String(event.payment_deadline_minutes)
+          : "30",
     });
   }, [open, event, reset]);
 
@@ -111,8 +134,14 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
 
   const onSubmit = (values) => {
     setFormError(null);
+    const { has_payment_deadline, payment_deadline_minutes, ...eventValues } =
+      values;
+
     const payload = {
-      ...values,
+      ...eventValues,
+      payment_deadline_minutes: has_payment_deadline
+        ? Number(payment_deadline_minutes)
+        : null,
       start_date: fromLocalInput(values.start_date),
       end_date: fromLocalInput(values.end_date),
       sales_start: fromLocalInput(values.sales_start),
@@ -257,6 +286,53 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
             </legend>
             {dt("sales_start", "Sales open")}
             {dt("sales_end", "Sales close")}
+          </fieldset>
+          <fieldset className="grid gap-4 rounded-lg border p-4">
+            <legend className="px-1 text-xs font-semibold uppercase trackign-wide text-muted-foreground">
+              Payment settings
+            </legend>
+
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                className="size -4 accent-blue-600"
+                {...register("has_payment_deadline")}
+              />
+
+              <div className="grid gap-0 5">
+                <span className="text-sm font-medium">
+                  Enable payment deadline
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Automatically expire unpaid orders.
+                </span>
+              </div>
+            </label>
+
+            {hasPaymentDeadline && (
+              <FormField
+                label="Payment time limit (minutes)"
+                htmlFor="event-payment-deadline"
+                error={errors.payment_deadline_minutes?.message}
+                hint="Orders will expire after this many minutes."
+                required
+              >
+                <Input
+                  id="event-payment-deadline"
+                  type="number"
+                  min="1"
+                  placeholder="30"
+                  aria-invalid={!!errors.payment_deadline_minutes || undefined}
+                  {...register("payment_deadline_minutes")}
+                />
+              </FormField>
+            )}
+
+            {!hasPaymentDeadline && (
+              <p className="text-sm text-muted-foreground">
+                Unpaid orders will not automatically expire.
+              </p>
+            )}
           </fieldset>
 
           <fieldset className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[200px_1fr]">

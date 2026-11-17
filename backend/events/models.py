@@ -59,6 +59,15 @@ class Event(models.Model):
 	sales_start = models.DateTimeField()
 	sales_end = models.DateTimeField()
 
+	payment_deadline_minutes = models.PositiveIntegerField(
+		null=True,
+		blank=True,
+		help_text=(
+			"Minutes allowed for payment. "
+			"Leave blank for no payment deadline."
+		)
+	)
+
 	status = models.CharField(
 		max_length=20,
 		choices=Status.choices,
