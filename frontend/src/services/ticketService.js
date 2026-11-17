@@ -39,7 +39,8 @@ export async function getTicketQr(id) {
   try {
     const { data } = await apiClient.get(`/api/tickets/${id}/qr/`, {
       responseType: "blob",
-      headers: { Accept: "image/png" },
+      // headers: { Accept: "image/png" },
+      headers: { Accept: "application/json" },
     });
     return data;
   } catch (error) {
@@ -52,7 +53,8 @@ export async function getTicketPdf(id) {
   try {
     const { data } = await apiClient.get(`/api/tickets/${id}/pdf/`, {
       responseType: "blob",
-      headers: { Accept: "application/pdf" },
+      // headers: { Accept: "application/pdf" },
+      headers: { Accept: "application/json" },
     });
     return data;
   } catch (error) {

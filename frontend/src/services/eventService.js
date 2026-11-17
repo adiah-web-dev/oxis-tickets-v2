@@ -36,12 +36,6 @@ export async function createEvent(payload) {
 
 /** PATCH /api/events/{id}/ */
 export async function updateEvent(id, payload) {
-  console.log("Banner Image:", payload.banner_image);
-  console.log("Is File:", payload.banner_image instanceof File);
-
-  const body = toRequestBody(payload);
-  console.log("Request body is FormData:", body instanceof FormData);
-
   const { data } = await apiClient.patch(
     `/api/events/${id}/`,
     toRequestBody(payload),

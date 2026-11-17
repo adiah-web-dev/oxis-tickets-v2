@@ -12,6 +12,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 
@@ -173,6 +174,8 @@ class TicketQRCodeView(APIView):
 		IsEventManagerOrCashier
 	]
 
+	renderer_classes = [JSONRenderer]
+
 	def get(self, request, id):
 		ticket = get_object_or_404(
 			Ticket.objects.select_related(
@@ -219,6 +222,8 @@ class TicketPDFView(APIView):
 		IsAuthenticated,
 		IsEventManagerOrCashier
 	]
+
+	renderer_classes = [JSONRenderer]
 
 	def get(self, request, id):
 		ticket = get_object_or_404(
