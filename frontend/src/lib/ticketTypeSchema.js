@@ -14,7 +14,12 @@ export const ticketTypeSchema = z.object({
     .regex(/^\d+(\.\d{1,2})?$/, "Enter a price such as 150.00"),
   description: z.string().trim().max(500),
   quantity: z.string().trim().regex(/^\d*$/, "Whole numbers only"),
-  max_per_order: z.string().trim().regex(/^\d*$/, "Whole numbers only"),
+  max_per_order: z
+    .string()
+    .trim()
+    .regex(/^\d*$/, "Whole numbers only")
+    .optional()
+    .or(z.literal("")),
 });
 
 export const TICKET_TYPE_FIELDS = [

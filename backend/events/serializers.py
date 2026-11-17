@@ -4,6 +4,11 @@ from rest_framework import serializers
 from .models import Event, TicketType
 
 class TicketTypeSerializer(serializers.ModelSerializer):
+	max_per_order = serializers.IntegerField(
+		required=False,
+		allow_null=True,
+		min_value=1
+	)
 	class Meta:
 		model = TicketType
 		fields = [

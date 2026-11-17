@@ -172,7 +172,9 @@ export function TicketTypeFormDialog({
             >
               <Input
                 id="tt-max"
-                inputMode="numeric"
+                type="number"
+                min="1"
+                placeholder="No limit"
                 {...register("max_per_order")}
               />
             </FormField>

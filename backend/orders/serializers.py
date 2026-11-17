@@ -165,7 +165,10 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 					'items': f'{ticket_type.name} is not available.'
 				})
 
-			if quantity > ticket_type.max_per_order:
+			if (
+				ticket_type.max_per_order is not None
+				and quantity > ticket_type.max_per_order
+			):
 				raise serializers.ValidationError({
 					'items': (
 						f'You can only purchase up to '
