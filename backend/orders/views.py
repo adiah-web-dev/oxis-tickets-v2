@@ -104,7 +104,7 @@ class OrderCancelView(APIView):
 			return Response(
 				{
 					'detail': (
-						'Confirmed orders cannot be cancelled'
+						'Confirmed orders cannot be cancelled '
 						'through this endpoint.'
 					)
 				},
