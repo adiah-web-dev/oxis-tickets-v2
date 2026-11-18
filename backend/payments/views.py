@@ -76,7 +76,7 @@ class PaymentCreateView(generics.CreateAPIView):
 				'order': 'Payments can only be recorded against pending orders.'
 			})
 
-		if order.expires_at <= timezone.now():
+		if order.expires_at is not None and order.expires_at <= timezone.now():
 			raise ValidationError({
 				'order': 'This order has expired.'
 			})
@@ -149,7 +149,7 @@ class PaymentVerifyView(APIView):
 				'order': 'This order is no longer pending.'
 			})
 
-		if order.expires_at <= timezone.now():
+		if order.expires_at is not None and order.expires_at <= timezone.now():
 			raise ValidationError({
 				'order': 'This order has expired and cannot be confirmed.'
 			})

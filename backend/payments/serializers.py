@@ -39,7 +39,10 @@ class CreatePaymentSerializer(serializers.ModelSerializer):
 				'order': 'Payments can only be recorded against pending orders.'
 			})
 
-		if order.expires_at <= timezone.now():
+		if (
+			order.expires_at is not None
+			and order.expires_at <= timezone.now()
+		):
 			raise serializers.ValidationError({
 				'order': 'This order has expired.'
 			})
