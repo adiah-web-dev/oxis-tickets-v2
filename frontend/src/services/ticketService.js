@@ -9,6 +9,40 @@ export async function listTickets(params) {
   return toPage(data, params.page);
 }
 
+export async function listAllTickets(params = {}) {
+  let allTickets = [];
+  let page = 1;
+  let count = 0;
+
+  while (true) {
+    const { data } = await apiClient.get("/api/tickets/", {
+      params: cleanParams({
+        ...params,
+        page,
+      }),
+    });
+
+    const result = toPage(data, page);
+
+    allTickets.push(...result.results);
+    count = result.count;
+
+    if (!result.next) {
+      break;
+    }
+
+    const nextPage = Number(result.next);
+    page = Number.isInteger(nextPage) ? nextPage : page + 1;
+  }
+
+  return {
+    count,
+    next: null,
+    previous: null,
+    results: allTickets,
+  };
+}
+
 /** GET /api/tickets/{id}/ */
 export async function getTicket(id) {
   const { data } = await apiClient.get(`/api/tickets/${id}/`);

@@ -39,7 +39,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useCancelOrder, useOrder } from "../hooks/useOrders";
 import { useOrderPayments } from "../hooks/usePayments";
-import { useTickets } from "../hooks/useTickets";
+import { useAllTickets } from "../hooks/useTickets";
 import { getHttpStatus } from "../lib/errors";
 import { formatCurrency, formatDateTime } from "../lib/format";
 import { orderStatusMeta } from "../lib/status";
@@ -51,7 +51,7 @@ export function OrderDetailPage() {
   const { can } = useAuth();
   const { data: order, isLoading, error, refetch } = useOrder(id);
   const payments = useOrderPayments(id, { enabled: can("viewPayments") });
-  const tickets = useTickets(
+  const tickets = useAllTickets(
     { order: id ?? undefined },
     { enabled: !!id && order?.status === "confirmed" },
   );

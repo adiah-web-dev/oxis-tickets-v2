@@ -7,6 +7,7 @@ import {
   getTicket,
   getTicketPdf,
   getTicketQr,
+  listAllTickets,
   listTickets,
 } from "../services/ticketService";
 
@@ -14,6 +15,15 @@ export function useTickets(params, options = {}) {
   return useQuery({
     queryKey: queryKeys.tickets.list(params),
     queryFn: () => listTickets(params),
+    placeholderData: keepPreviousData,
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useAllTickets(params, options = {}) {
+  return useQuery({
+    queryKey: ["tickets", "all", params],
+    queryFn: () => listAllTickets(params),
     placeholderData: keepPreviousData,
     enabled: options.enabled ?? true,
   });
