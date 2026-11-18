@@ -10,6 +10,12 @@ class TicketTypeSerializer(serializers.ModelSerializer):
 		min_value=1
 	)
 
+	quantity_available = serializers.IntegerField(
+		required=False,
+		allow_null=True,
+		min_value=1
+	)
+
 	class Meta:
 		model = TicketType
 		fields = [

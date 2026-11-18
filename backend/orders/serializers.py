@@ -200,15 +200,16 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 
 			already_reserved = reserved_quantities.get(ticket_type.id, 0)
 
-			available = (ticket_type.quantity_available - already_reserved)
+			if ticket_type.quantity_available is not None:
+				available = (ticket_type.quantity_available - already_reserved)
 
-			if quantity > available:
-				raise serializers.ValidationError({
-					'items': (
-						f'Only {max(available, 0)}'
-						f'{ticket_type.name} tickets are available.'
-					)
-				})
+				if quantity > available:
+					raise serializers.ValidationError({
+						'items': (
+							f'Only {max(available, 0)}'
+							f'{ticket_type.name} tickets are available.'
+						)
+					})
 
 		# Create the order only after all items pass validation.
 		order = Order.objects.create(

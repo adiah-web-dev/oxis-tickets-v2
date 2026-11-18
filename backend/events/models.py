@@ -137,7 +137,11 @@ class TicketType(models.Model):
 		default='TTD',
 	)
 
-	quantity_available = models.PositiveIntegerField()
+	quantity_available = models.PositiveIntegerField(
+		null=True,
+		blank=True,
+		default=None,
+	)
 
 	max_per_order = models.PositiveIntegerField(null=True, blank=True, default=None)
 

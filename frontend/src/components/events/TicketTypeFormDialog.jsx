@@ -160,7 +160,9 @@ export function TicketTypeFormDialog({
             >
               <Input
                 id="tt-quantity"
-                inputMode="numeric"
+                type="number"
+                min="1"
+                placeholder="No limit"
                 {...register("quantity")}
               />
             </FormField>
