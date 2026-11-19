@@ -57,10 +57,10 @@ def generate_ticket_pdf(ticket):
     backdrop = None
 
     # First preference: event-specific backdrop
-    if event.banner_image:
+    if event.ticket_backdrop_image:
         try:
-            event.banner_image.open('rb')
-            with Image.open(event.banner_image.file) as source:
+            event.ticket_backdrop_image.open('rb')
+            with Image.open(event.ticket_backdrop_image.file) as source:
                 backdrop = source.convert('RGB').copy()
 
         except Exception:
@@ -68,7 +68,7 @@ def generate_ticket_pdf(ticket):
 
         finally:
             try:
-                event.banner_image.close()
+                event.ticket_backdrop_image.close()
             except Exception:
                 pass
 

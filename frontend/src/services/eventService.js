@@ -17,14 +17,29 @@ export async function getEvent(id) {
 
 /** JSON normally; multipart/form-data when banner artwork is attached. */
 function toRequestBody(payload) {
-  const { banner_image, ...rest } = payload;
-  if (!(banner_image instanceof File)) return rest;
+  const { banner_image, ticket_backdrop_image, ...rest } = payload;
+
+  const hasBanner = banner_image instanceof File;
+  const hasTicketBackdrop = ticket_backdrop_image instanceof File;
+  if (!hasBanner && !hasTicketBackdrop) {
+    return rest;
+  }
+
   const form = new FormData();
+
   Object.entries(rest).forEach(([key, value]) => {
     if (value !== undefined)
       form.append(key, value === null ? "" : String(value));
   });
-  form.append("banner_image", banner_image);
+
+  if (hasBanner) {
+    form.append("banner_image", banner_image);
+  }
+
+  if (hasTicketBackdrop) {
+    form.append("ticket_backdrop_image", ticket_backdrop_image);
+  }
+
   return form;
 }
 

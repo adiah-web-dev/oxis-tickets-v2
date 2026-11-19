@@ -77,6 +77,8 @@ const FIELDS = [
   "ticket_text_color",
   "ticket_overlay_opacity",
   "payment_deadline_minutes",
+  "banner_image",
+  "ticket_backdrop_image",
 ];
 
 export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
@@ -85,7 +87,9 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
   const updateEvent = useUpdateEvent();
   const isPending = createEvent.isPending || updateEvent.isPending;
   const [banner, setBanner] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [ticketBackdrop, setTicketBackdrop] = useState(null);
+  const [ticketBackdropPreview, setTicketBackdropPreview] = useState(null);
   const [formError, setFormError] = useState(null);
 
   const {
@@ -106,8 +110,12 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
   useEffect(() => {
     if (!open) return;
     setBanner(null);
+    setTicketBackdrop(null);
+
     setFormError(null);
-    setPreview(event?.banner_image ?? null);
+
+    setBannerPreview(event?.banner_image ?? null);
+    setTicketBackdropPreview(event?.ticket_backdrop_image ?? null);
     reset({
       name: event?.name ?? "",
       description: event?.description ?? "",
@@ -126,10 +134,18 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
     });
   }, [open, event, reset]);
 
-  const onFile = (file) => {
+  const onBannerFile = (file) => {
     if (!file) return;
+
     setBanner(file);
-    setPreview(URL.createObjectURL(file));
+    setBannerPreview(URL.createObjectURL(file));
+  };
+
+  const onTicketBackdropFile = (file) => {
+    if (!file) return;
+
+    setTicketBackdrop(file);
+    setTicketBackdropPreview(URL.createObjectURL(file));
   };
 
   const onSubmit = (values) => {
@@ -147,6 +163,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
       sales_start: fromLocalInput(values.sales_start),
       sales_end: fromLocalInput(values.sales_end),
       ...(banner ? { banner_image: banner } : {}),
+      ...(ticketBackdrop ? { ticket_backdrop_image: ticketBackdrop } : {}),
     };
     const options = {
       onSuccess: (saved) => {
@@ -156,8 +173,19 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
       onError: (error) => {
         const fields = getFieldErrors(error);
         FIELDS.forEach((f) => fields[f] && setError(f, { message: fields[f] }));
-        if (fields.banner_image || !Object.keys(fields).length)
-          setFormError(fields.banner_image ?? getApiErrorMessage(error));
+        // if (fields.banner_image || !Object.keys(fields).length)
+        //   setFormError(fields.banner_image ?? getApiErrorMessage(error));
+        if (
+          fields.banner_image ||
+          fields.ticket_backdrop_image ||
+          !Object.keys(fields).length
+        ) {
+          setFormError(
+            fields.banner_image ??
+              fields.ticket_backdrop_image ??
+              getApiErrorMessage(error),
+          );
+        }
       },
     };
     if (isEdit && event) updateEvent.mutate({ id: event.id, payload }, options);
@@ -335,14 +363,174 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
             )}
           </fieldset>
 
+          {/* Event banner */}
           <fieldset className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[200px_1fr]">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Ticket artwork
+              Event banner
+            </legend>
+
+            <div
+              className="relative flex aspect-[4/3] ites-center justify-center overflow-hidden rounded-lg border bg-slate-100 bg-cover bg-center"
+              style={
+                bannerPreview
+                  ? { backgroundImage: `url(${bannerPreview})` }
+                  : undefined
+              }
+            >
+              {!bannerPreview && (
+                <span className="text-sm text-muted-foreground">
+                  No banner uploaded
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-">
+              <label className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 text-s font-medium hover:bg-slate-50">
+                <ImagePlus className="size-4" />
+                {bannerPreview ? "Replace banner" : "Upload banner"}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => onBannerFile(e.target.files?.[0])}
+                />
+              </label>
+
+              {banner && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setBanner(null);
+                    setBannerPreview(event?.banner_image ?? null);
+                  }}
+                >
+                  <X className="size-3.5" />
+                  Cancel replaceent
+                </Button>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Used for the event website and listings
+              </p>
+            </div>
+          </fieldset>
+
+          {/* Ticket backdrop */}
+          <fieldset className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[200px_1fr]">
+            <legend className="px-1 tex-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Ticket backdrop
+            </legend>
+
+            <div
+              className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border bg-slate-100 bg-cover bg-center"
+              style={
+                ticketBackdropPreview
+                  ? { backgroundIamge: `url(${ticketBackdropPreview})` }
+                  : undefined
+              }
+            >
+              {!ticketBackdropPreview && (
+                <span className="px-3 text-center text-sm text-muted-foreground">
+                  Default ticket backdrop will be used
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <label className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 text-sm font-medium hover:bg-slate-50">
+                <ImagePlus className="size-4" />
+                {ticketBackdropPreview ? "Replace backdrop" : "Upload backdrop"}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => onTicketBackdropFile(e.target.files?.[0])}
+                />
+              </label>
+
+              {ticketBackdrop && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setTicketBackdrop(null);
+                    setTicketBackdropPreview(
+                      event?.ticket_backdrop_image ?? null,
+                    );
+                  }}
+                >
+                  <X className="size-3.5" />
+                  Cancel replacement
+                </Button>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Optional. Used as the background when generating PDF tickets.
+                Leave blank to use the default ticket design.
+              </p>
+            </div>
+          </fieldset>
+
+          {/* Ticket text styling */}
+          <fieldset className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Ticket text styling
+            </legend>
+
+            <FormField
+              label="Text colour"
+              htmlFor="event-color"
+              error={errors.ticket_text_color?.message}
+            >
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  aria-label="Pick text colour"
+                  className="h-8 w-10 cursor-pointer rounded border"
+                  value={textColor || "#FFFFFF"}
+                  onChange={() => undefined}
+                  {...register("ticket_text_color")}
+                />
+                <Input
+                  id="event-color"
+                  className="font-mono uppercase"
+                  {...register("ticket_text_color")}
+                />
+              </div>
+            </FormField>
+
+            <FormField
+              label={`Overlay opacity · ${Math.round((opacity ?? 0) * 100)}%`}
+              htmlFor="event-opacity"
+              error={errors.ticket_overlay_opacity?.message}
+            >
+              <input
+                id="event-opacity"
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                className="mt-2 w-full accent-blue-500"
+                {...register("ticket_overlay_opacity", {
+                  valueAsNumber: true,
+                })}
+              />
+            </FormField>
+          </fieldset>
+
+          {/* <fieldset className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[200px_1fr]">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Event banner
             </legend>
             <div
               className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border bg-navy-900 bg-cover bg-center"
               style={
-                preview ? { backgroundImage: `url(${preview})` } : undefined
+                bannerPreview ? { backgroundImage: `url(${bannerPreview})` } : undefined
               }
             >
               <div
@@ -427,7 +615,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSaved }) {
                 </FormField>
               </div>
             </div>
-          </fieldset>
+          </fieldset> */}
         </form>
         <DialogFooter>
           <Button
