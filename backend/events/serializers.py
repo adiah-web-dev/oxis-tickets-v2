@@ -60,6 +60,11 @@ class EventSerializer(serializers.ModelSerializer):
 		allow_null=True,
 	)
 
+	ticket_backdrop_image = serializers.ImageField(
+		required=False,
+		allow_null=True,
+	)
+
 	payment_deadline_minutes = serializers.IntegerField(
 		required=False,
 		allow_null=True,
@@ -81,6 +86,7 @@ class EventSerializer(serializers.ModelSerializer):
 			'status',
 			'created_by_email',
 			'banner_image',
+			'ticket_backdrop_image',
 			'ticket_text_color',
 			'ticket_overlay_opacity',
 			'ticket_types',

@@ -30,6 +30,7 @@ class Event(models.Model):
 
 	description = models.TextField(blank=True)
 	banner_image = models.ImageField(upload_to='event_artwork/', blank=True, null=True)
+	ticket_backdrop_image = models.ImageField(upload_to='events/ticket_backdrops/', null=True, blank=True)
 	ticket_text_color = models.CharField(
 		max_length=7,
 		default='#FFFFFF',
