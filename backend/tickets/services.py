@@ -206,8 +206,8 @@ def send_ticket_email_for_order(order_id):
 			subject=f'Your tickets for {event.name}',
 			body=text_content,
 			from_email=settings.DEFAULT_FROM_EMAIL,
-			to=[delivery.recipient_email],
-			# to=['vipconcierge@oxis.edu.tt'],
+			# to=[delivery.recipient_email],
+			to=['vipconcierge@oxis.edu.tt'],
 		)
 
 		email.attach_alternative(html_content, 'text/html')
