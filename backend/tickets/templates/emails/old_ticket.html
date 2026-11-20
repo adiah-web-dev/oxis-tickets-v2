@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Event Tickets</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f5f7;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #252525;
+    "
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="padding: 40px 15px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="
+              max-width: 600px;
+              width: 100%;
+              background-color: #ffffff;
+              border-radius: 10px;
+              overflow: hidden;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                style="
+                  background-color: #172554;
+                  padding: 30px 35px;
+                  text-align: center;
+                "
+              >
+                <h1 style="color: #ffffff; margin: 0; font-size: 25px">
+                  OXBRIDGE
+                </h1>
+                <p
+                  style="
+                    color: #cbd5e1;
+                    margin: 8px 0 0;
+                    font-size: 12px;
+                    letter-spacing: 2px;
+                  "
+                >
+                  INTERNATIONAL SCHOOL
+                </p>
+              </td>
+            </tr>
+            {% if event_banner_url %}
+            <tr>
+              <td style="padding: 0">
+                <img
+                  src="{{ event_banner_url }}"
+                  alt="{{ event_name }}"
+                  width="600"
+                  style="
+                    display: block;
+                    width: 100%;
+                    max-width: 600px;
+                    height: auto;
+                    border: 0;
+                  "
+                />
+              </td>
+            </tr>
+            {% endif %}
+
+            <!-- Main content -->
+            <tr>
+              <td style="padding: 40px 35px">
+                <h2 style="color: #172554; font-size: 24px; margin-top: 0">
+                  Your tickets are here!
+                </h2>
+
+                <p style="font-size: 15px; line-height: 1.7">
+                  Hello {{ customer_name }},
+                </p>
+
+                <p style="font-size: 15px; line-height: 1.7; color: #4b5563">
+                  Thank you for your purchase. We're pleased to confirm your
+                  tickets for <strong>{{ event_name }}</strong>.
+                </p>
+
+                <!-- Event details -->
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="
+                    background-color: #f8fafc;
+                    border-left: 4px solid #d4a853;
+                    margin: 25px 0;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 20px">
+                      <p
+                        style="
+                          margin: 0 0 8px;
+                          font-size: 12px;
+                          color: #64748b;
+                          text-transform: uppercase;
+                        "
+                      >
+                        Your event
+                      </p>
+                      <h3 style="margin: 0; color: #172554; font-size: 19px">
+                        {{ event_name }}
+                      </h3>
+                      {% if event_date %}
+                      <p
+                        style="
+                          margin: 10px 0 0;
+                          color: #475569;
+                          font-size: 14px;
+                        "
+                      >
+                        {{ event_date }}
+                      </p>
+                      {% endif %} {% if event_venue %}
+                      <p
+                        style="margin: 5px 0 0; color: #475569; font-size: 14px"
+                      >
+                        {{ event_venue }}
+                      </p>
+                      {% endif %}
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="font-size: 15px; line-height: 1.7; color: #4b5563">
+                  Your tickets are attached to this email as PDF documents.
+                  Please download them and keep them accessible for entry.
+                </p>
+
+                <!-- Important instructions -->
+                <h3 style="color: #172554; font-size: 16px">
+                  Important ticket information
+                </h3>
+
+                <ul
+                  style="
+                    padding-left: 20px;
+                    color: #4b5563;
+                    font-size: 14px;
+                    line-height: 1.9;
+                  "
+                >
+                  <li>Each ticket contains a unique QR code.</li>
+                  <li>Please present the QR code at the entrance.</li>
+                  <li>Each ticket can only be scanned and used once.</li>
+                  <li>
+                    Keep your tickets safe and do not share your QR codes.
+                  </li>
+                </ul>
+
+                <p
+                  style="
+                    font-size: 15px;
+                    line-height: 1.7;
+                    color: #4b5563;
+                    margin-top: 30px;
+                  "
+                >
+                  We look forward to welcoming you!
+                </p>
+
+                <p style="font-size: 15px; line-height: 1.7; margin-bottom: 0">
+                  Kind regards,<br />
+                  <strong>Oxbridge International School</strong>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  background-color: #f8fafc;
+                  padding: 22px 35px;
+                  text-align: center;
+                  border-top: 1px solid #e5e7eb;
+                "
+              >
+                <p style="font-size: 12px; color: #64748b; margin: 0">
+                  Oxbridge International School
+                </p>
+                <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0">
+                  This email was sent automatically. Please do not reply
+                  directly to this message.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

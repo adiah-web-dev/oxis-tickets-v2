@@ -1,9 +1,14 @@
+from collections import Counter
 from datetime import timedelta
+from email.mime.image import MIMEImage
+from urllib.parse import urljoin
 
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db import transaction
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from orders.models import Order, OrderItem
 from .models import Ticket, TicketDelivery
@@ -67,7 +72,10 @@ def send_ticket_email_for_order(order_id):
 
 	# First reserve the delivery attempt in the database.
 	with transaction.atomic():
-		order = Order.objects.select_for_update().get(pk=order_id)
+		# order = Order.objects.select_for_update().get(pk=order_id)
+		order = Order.objects.select_for_update().select_related(
+			'event'
+		).get(pk=order_id)
 
 		if order.status != Order.Status.CONFIRMED:
 			return False
@@ -75,6 +83,7 @@ def send_ticket_email_for_order(order_id):
 		delivery, created = TicketDelivery.objects.get_or_create(
 			order=order,
 			defaults={
+				# 'recipient_email': 'vipconcierge@oxis.edu.tt'
 				'recipient_email': order.customer_email,
 			},
 		)
@@ -94,6 +103,7 @@ def send_ticket_email_for_order(order_id):
 		):
 			return False
 
+		# Reserve this attempt.
 		delivery.recipient_email = order.customer_email
 		delivery.status = TicketDelivery.Status.PENDING
 		delivery.attempts += 1
@@ -123,21 +133,104 @@ def send_ticket_email_for_order(order_id):
 
 		event = order.event
 
-		email = EmailMessage(
-			subject=f'Your tickets for {event.name}',
-			body=(
-				f'Hello {order.customer_name},\n\n'
-				f'Thank you for your purchase.\n\n'
-				f'Attached are your tickets for {event.name}.\n'
-				'Please present the QR code on each ticket at the'
-				'entrance. Each ticket can only be used once.\n\n'
-				'We look forward to seeing you!\n\n'
-				'Oxbridge International School'
-			),
-			from_email=settings.DEFAULT_FROM_EMAIL,
-			to=[order.customer_email],
+		# Calculate ticketet quantities
+		ticket_counts = Counter(
+			ticket.order_item.ticket_type.name
+			for ticket in tickets
 		)
 
+		ticket_summary = [
+			{
+				'name': name,
+				'quantity': quantity,
+			}
+			for name, quantity in ticket_counts.items()
+		]
+
+		total_tickets = tickets.count()
+
+
+		# Prepare email template context
+
+		context = {
+			'customer_name': order.customer_name,
+
+			'event_name': event.name,
+			'event_theme': getattr(event, 'theme', ''),
+			'event_date': event.start_date,
+			'event_venue': event.venue,
+
+			# 'event_banner_url': event_banner_url,
+			'event_banner_attached': bool(event.banner_image),
+
+			'ticket_counts': ticket_summary,
+			'total_tickets': total_tickets,
+		}
+
+		# Render HTML email
+		html_content = render_to_string(
+			'emails/ticket_delivery.html',
+			context
+		)
+
+		# Plain-text fallback.
+		text_content = (
+			f"Dear {order.customer_name},\n\n"
+			f"Thank you for your purchase!\n\n"
+			f"Your tickets for {event.name} are attached.\n\n"
+			f"Event: {event.name}\n"
+			f"Date: {event.start_date}\n"
+			f"Venue: {event.venue}n\n"
+			f"Ticket Summary:\n"
+		)
+
+		for item in ticket_summary:
+			text_content += (
+				f"- {item['name']}: {item['quantity']}\n"
+			)
+
+		text_content += (
+			f"\nTotal Tickets: {total_tickets}\n\n"
+			'Please present the QR code on each ticket'
+			'at the entrance. Each ticket can only be'
+			'used once.\n\n'
+			'We look forward to seeing you!\n\n'
+			'The Oxbridge International School'
+		)
+
+
+		# text_content = strip_tags(html_content)
+		# construct email
+
+		email = EmailMultiAlternatives(
+			subject=f'Your tickets for {event.name}',
+			body=text_content,
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			to=[delivery.recipient_email],
+			# to=['vipconcierge@oxis.edu.tt'],
+		)
+
+		email.attach_alternative(html_content, 'text/html')
+
+		if event.banner_image:
+			with event.banner_image.open('rb') as image_file:
+				banner_image = MIMEImage(image_file.read())
+
+			banner_image.add_header(
+				'Content-ID',
+				'<event-banner>'
+			)
+
+			banner_image.add_header(
+				'Content-Disposition',
+				'inline',
+				filename='event-banner'
+			)
+
+			email.attach(banner_image)
+
+
+		# Generate and attach individual PDF tickets
 		for ticket in tickets:
 			pdf_buffer = generate_ticket_pdf(ticket)
 
