@@ -3,7 +3,7 @@ import { mockAdapter } from "./demo/mockAdapter";
 import { SESSION_EXPIRED_EVENT, tokenStorage } from "./tokenStorage";
 const env = import.meta.env;
 
-export const API_BASE_URL = env?.VITE_API_URL || "http://localhost:8000";
+export const API_BASE_URL = env?.VITE_API_URL || "";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
