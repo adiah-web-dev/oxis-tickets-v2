@@ -41,7 +41,9 @@ export async function fetchAll(url, params = {}, maxPages = 50) {
   let next = data?.next;
   let pages = 1;
   while (next && pages < maxPages) {
-    const res = await apiClient.get(next);
+    const nextUrl = new URL(next, window.location.origin);
+    const nextPath = `${nextUrl.pathname}${nextUrl.search}`;
+    const res = await apiClient.get(nextPath);
     results.push(...(res.data?.results ?? []));
     next = res.data?.next;
     pages++;
