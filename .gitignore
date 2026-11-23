@@ -4,6 +4,9 @@
 
 !.env.example
 
+# Certs
+frontend/certs/
+
 # Python
 __pycache__/
 *.py[cod]
