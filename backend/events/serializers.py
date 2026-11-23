@@ -3,6 +3,13 @@ from rest_framework import serializers
 
 from .models import Event, TicketType
 
+class RelativeImageField(serializers.ImageField):
+	def to_representation(selv, value):
+		if not value:
+			return None
+
+		return value.url
+
 class TicketTypeSerializer(serializers.ModelSerializer):
 	max_per_order = serializers.IntegerField(
 		required=False,
@@ -55,12 +62,12 @@ class EventSerializer(serializers.ModelSerializer):
 		read_only=True,
 	)
 
-	banner_image = serializers.ImageField(
+	banner_image = RelativeImageField(
 		required=False,
 		allow_null=True,
 	)
 
-	ticket_backdrop_image = serializers.ImageField(
+	ticket_backdrop_image = RelativeImageField(
 		required=False,
 		allow_null=True,
 	)
