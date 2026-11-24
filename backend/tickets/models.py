@@ -50,6 +50,10 @@ class Ticket(models.Model):
 		related_name='checked_in_tickets'
 	)
 
+	cancelled_at = models.DateTimeField(null=True, blank=True)
+	cancelled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='cancelled_tickets')
+	cancellation_reason = models.TextField(blank=True)
+
 	class Meta:
 		ordering = ['-issued_at']
 		indexes = [

@@ -8,6 +8,7 @@ import {
   recordPayment,
   rejectPayment,
   verifyPayment,
+  voidPayment,
 } from "../services/paymentService";
 import { useInvalidateOrderWorkflow } from "./useOrders";
 
@@ -68,6 +69,24 @@ export function useRejectPayment() {
     },
     onError: (error) =>
       toast.error("Payment could not be rejected", {
+        description: getApiErrorMessage(error),
+      }),
+  });
+}
+
+export function useVoidPayment() {
+  const invalidate = useInvalidateOrderWorkflow();
+  return useMutation({
+    mutationFn: ({ payment, reason }) => voidPayment(payment.id, reason),
+    onSuccess: (_data, variables) => {
+      invalidate(variables.payment.order);
+      toast.success("Payment voided", {
+        description:
+          "It remains in the payment history but is excluded from revenue.",
+      });
+    },
+    onError: (error) =>
+      toast.error("Payment could not be voided", {
         description: getApiErrorMessage(error),
       }),
   });

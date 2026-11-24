@@ -53,6 +53,12 @@ class TicketDetailSerializer(TicketListSerializer):
 
 	checked_in_at = serializers.DateTimeField(read_only=True)
 
+	cancelled_by_email = serializers.EmailField(
+		source='cancelled_by.email',
+		read_only=True,
+		allow_null=True,
+	)
+
 	checked_in_by_email = serializers.EmailField(
 		source='checked_in_by.email',
 		read_only=True,
@@ -64,6 +70,9 @@ class TicketDetailSerializer(TicketListSerializer):
 			'customer_email',
 			'checked_in_at',
 			'checked_in_by_email',
+			'cancelled_at',
+			'cancelled_by_email',
+			'cancellation_reason',
 		]
 
 class TicketDeliverySerializer(serializers.ModelSerializer):

@@ -17,6 +17,7 @@ from accounts.permissions import (
 
 from orders.models import Order
 from .models import Payment
+from orders.services import void_payment
 from .serializers import (
 	CreatePaymentSerializer,
 	PaymentDetailSerializer,
@@ -50,6 +51,7 @@ class PaymentListView(generics.ListAPIView):
 				'order',
 				'received_by',
 				'verified_by',
+				'voided_by',
 			)
 		)
 
@@ -71,6 +73,9 @@ class PaymentCreateView(generics.CreateAPIView):
 			id=order_id,
 		)
 
+		if order.is_deleted:
+			raise ValidationError({'order': 'Deleted orders cannot receive payments.'})
+
 		if order.status != Order.Status.PENDING:
 			raise ValidationError({
 				'order': 'Payments can only be recorded against pending orders.'
@@ -82,12 +87,12 @@ class PaymentCreateView(generics.CreateAPIView):
 			})
 
 		verified_total = (
-			order.payments.filter(status=Payment.Status.VERIFIED)
+			order.payments.filter(status=Payment.Status.VERIFIED, is_voided=False)
 			.aggregate(total=Sum('amount'))['total'] or 0
 		)
 
 		pending_total = (
-			order.payments.filter(status=Payment.Status.PENDING)
+			order.payments.filter(status=Payment.Status.PENDING, is_voided=False)
 			.aggregate(total=Sum('amount'))['total'] or 0
 		)
 
@@ -121,6 +126,7 @@ class PaymentDetailView(generics.RetrieveAPIView):
 			'order',
 			'received_by',
 			'verified_by',
+			'voided_by',
 		)
 
 class PaymentVerifyView(APIView):
@@ -139,6 +145,12 @@ class PaymentVerifyView(APIView):
 			id=payment.order_id,
 		)
 
+		if payment.is_voided:
+			raise ValidationError({'payment': 'Voided payments cannot be verified.'})
+
+		if order.is_deleted:
+			raise ValidationError({'order': 'Deleted orders cannot be confirmed.'})
+
 		if payment.status != Payment.Status.PENDING:
 			raise ValidationError({
 				'payment': 'Only pending payments can be verified.'
@@ -155,7 +167,7 @@ class PaymentVerifyView(APIView):
 			})
 
 		verified_total = (
-			order.payments.filter(status=Payment.Status.VERIFIED)
+			order.payments.filter(status=Payment.Status.VERIFIED, is_voided=False)
 			.aggregate(total=Sum('amount'))['total'] or 0
 		)
 
@@ -206,6 +218,9 @@ class PaymentRejectView(APIView):
 			id=id,
 		)
 
+		if payment.is_voided or payment.order.is_deleted:
+			raise ValidationError({'payment': 'This payment cannot be changed because it is voided or its order is deleted.'})
+
 		if payment.status != Payment.Status.PENDING:
 			raise ValidationError({
 				'payment': 'Only pending payments can be rejected.'
@@ -225,3 +240,12 @@ class PaymentRejectView(APIView):
 			PaymentDetailSerializer(payment).data,
 			status=status.HTTP_200_OK,
 		)
+
+
+class PaymentVoidView(APIView):
+	permission_classes = [IsEventManager]
+
+	def post(self, request, id):
+		payment = get_object_or_404(Payment, pk=id)
+		payment = void_payment(payment.pk, request.user, request.data.get('reason', ''))
+		return Response(PaymentDetailSerializer(payment).data, status=status.HTTP_200_OK)

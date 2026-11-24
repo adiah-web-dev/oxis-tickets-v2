@@ -64,6 +64,10 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 			'total',
 			'expires_at',
 			'created_at',
+			'updated_at',
+			'is_deleted',
+			'deleted_at',
+			'deletion_reason',
 		]
 
 class CreateOrderSerializer(serializers.ModelSerializer):

@@ -29,3 +29,11 @@ export async function cancelOrder(id) {
   const { data } = await apiClient.post(`/api/orders/${id}/cancel/`);
   return data && typeof data === "object" && "id" in data ? data : undefined;
 }
+
+/** POST /api/orders/{id}/delete/ — soft-delete and invalidate related records. */
+export async function softDeleteOrder(id, reason = "") {
+  const { data } = await apiClient.post(`/api/orders/${id}/delete/`, {
+    reason,
+  });
+  return data;
+}

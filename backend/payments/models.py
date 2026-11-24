@@ -77,6 +77,11 @@ class Payment(models.Model):
 
 	updated_at = models.DateTimeField(auto_now=True)
 
+	is_voided = models.BooleanField(default=False)
+	voided_at = models.DateTimeField(null=True, blank=True)
+	voided_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='voided_payments')
+	voided_reason = models.TextField(blank=True)
+
 	def __str__(self):
 		return f'{self.order.order_number} - {self.amount}'
 

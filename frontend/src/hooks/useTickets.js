@@ -1,9 +1,15 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "../lib/errors";
 import { queryKeys } from "../lib/queryKeys";
 import {
+  cancelTicket,
   getTicket,
   getTicketPdf,
   getTicketQr,
@@ -80,4 +86,21 @@ export async function openTicketPdf(id, ticketCode, mode) {
       description: getApiErrorMessage(error),
     });
   }
+}
+
+export function useCancelTicket() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) => cancelTicket(id, reason),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: queryKeys.tickets.all });
+      client.invalidateQueries({ queryKey: queryKeys.orders.all });
+      client.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Ticket cancelled");
+    },
+    onError: (error) =>
+      toast.error("Ticket could not be cancelled", {
+        description: getApiErrorMessage(error),
+      }),
+  });
 }

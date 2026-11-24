@@ -66,6 +66,10 @@ class Order(models.Model):
 
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
+	is_deleted = models.BooleanField(default=False)
+	deleted_at = models.DateTimeField(null=True, blank=True)
+	deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_orders')
+	deletion_reason = models.TextField(blank=True)
 
 	@property
 	def total(self):

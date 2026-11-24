@@ -6,6 +6,7 @@ from .views import (
 	PaymentDetailView,
 	PaymentVerifyView,
 	PaymentRejectView,
+	PaymentVoidView,
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
 	path('<uuid:pk>/', PaymentDetailView.as_view(), name='payment-detail'),
 	path('<uuid:id>/verify/', PaymentVerifyView.as_view(), name='payment-verify'),
 	path('<uuid:id>/reject/', PaymentRejectView.as_view(), name='payment-reject'),
+	path('<uuid:id>/void/', PaymentVoidView.as_view(), name='payment-void'),
 ]

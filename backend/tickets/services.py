@@ -26,6 +26,9 @@ def issue_tickets_for_order(order_id):
 	# for it simultaneously
 	order = Order.objects.select_for_update().get(pk=order_id)
 
+	if order.is_deleted:
+		raise ValueError('Tickets cannot be issued for a deleted order.')
+
 	if order.status != 'confirmed':
 		raise ValueError(
 			'Tickets can only be issued for confirmed orders.'
@@ -77,7 +80,7 @@ def send_ticket_email_for_order(order_id):
 			'event'
 		).get(pk=order_id)
 
-		if order.status != Order.Status.CONFIRMED:
+		if order.is_deleted or order.status != Order.Status.CONFIRMED:
 			return False
 
 		delivery, created = TicketDelivery.objects.get_or_create(
@@ -122,7 +125,8 @@ def send_ticket_email_for_order(order_id):
 	# Generate the attachments and send outside the transaction.
 	try:
 		tickets = Ticket.objects.filter(
-			order_item__order_id=order_id
+			order_item__order_id=order_id,
+			status__in=[Ticket.Status.VALID, Ticket.Status.USED],
 		).select_related(
 			'order_item__order__event',
 			'order_item__ticket_type',
@@ -239,6 +243,12 @@ def send_ticket_email_for_order(order_id):
 				content=pdf_buffer.getvalue(),
 				mimetype='application/pdf',
 			)
+
+		# Re-check after PDF preparation in case the order was deleted while
+		# attachments were being generated.
+		order.refresh_from_db(fields=['is_deleted', 'status'])
+		if order.is_deleted or order.status != Order.Status.CONFIRMED:
+			raise ValueError('This order is no longer eligible for ticket delivery.')
 
 		sent_count = email.send(fail_silently=False)
 

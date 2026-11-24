@@ -7,6 +7,7 @@ import { PageHeader } from "../components/common/PageHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
 import { TablePagination } from "../components/common/TablePagination";
 import { PaymentReviewActions } from "../components/payments/PaymentReviewActions";
+import { PaymentVoidAction } from "../components/payments/PaymentVoidAction";
 import { Card } from "../components/ui/Card";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/Tabs";
 import { useAuth } from "../contexts/AuthContext";
@@ -77,12 +78,19 @@ export function PaymentsPage() {
       header: "Recorded",
       className: "hidden md:table-cell whitespace-nowrap text-muted-foreground",
       headerClassName: "hidden md:table-cell",
-      cell: (p) => formatDateTime(p.created_at),
+      cell: (p) => formatDateTime(p.received_at),
     },
     {
       key: "status",
       header: "Status",
-      cell: (p) => <StatusBadge {...paymentStatusMeta[p.status]} />,
+      cell: (p) =>
+        p.is_voided ? (
+          <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            Voided
+          </span>
+        ) : (
+          <StatusBadge {...paymentStatusMeta[p.status]} />
+        ),
     },
     ...(canVerify
       ? [
@@ -90,10 +98,14 @@ export function PaymentsPage() {
             key: "actions",
             header: "",
             className: "text-right",
-            cell: (p) =>
-              p.status === "pending" ? (
-                <PaymentReviewActions payment={p} />
-              ) : null,
+            cell: (p) => (
+              <div className="flex justify-end gap-2">
+                {p.status === "pending" && !p.is_voided && (
+                  <PaymentReviewActions payment={p} />
+                )}
+                {!p.is_voided && <PaymentVoidAction payment={p} />}
+              </div>
+            ),
           },
         ]
       : []),

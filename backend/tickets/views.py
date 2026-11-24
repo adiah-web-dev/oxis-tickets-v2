@@ -21,6 +21,7 @@ from .models import Ticket, TicketDelivery
 from .pdf import generate_ticket_pdf
 from .serializers import TicketCheckInSerializer, TicketListSerializer, TicketDetailSerializer, TicketDeliverySerializer
 from .services import send_ticket_email_for_order
+from orders.services import cancel_ticket
 
 class TicketCheckInView(APIView):
 	permission_classes = [IsAuthenticated, IsEventManagerOrScanner]
@@ -48,7 +49,7 @@ class TicketCheckInView(APIView):
 				)
 
 			# The order must be confirmed before entry is allowed.
-			if ticket.order_item.order.status != 'confirmed':
+			if ticket.order_item.order.is_deleted or ticket.order_item.order.status != 'confirmed':
 				return Response(
 					{
 						'success': False,
@@ -67,7 +68,7 @@ class TicketCheckInView(APIView):
 					status=status.HTTP_400_BAD_REQUEST
 				)
 
-			if ticket.status == Ticket.Status.CANCELLED:
+			if ticket.status == Ticket.Status.CANCELLED or ticket.order_item.order.is_deleted:
 				return Response(
 					{
 						'success': False,
@@ -166,6 +167,7 @@ class TicketDetailView(generics.RetrieveAPIView):
 		'order_item__order__event',
 		'order_item__ticket_type',
 		'checked_in_by',
+		'cancelled_by',
 	)
 
 class TicketQRCodeView(APIView):
@@ -184,6 +186,12 @@ class TicketQRCodeView(APIView):
 			),
 			id=id
 		)
+
+		if ticket.status == Ticket.Status.CANCELLED or ticket.order_item.order.is_deleted:
+			return Response(
+				{'success': False, 'message': 'Cannot generate a QR code for a cancelled ticket.'},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
 
 		# Generate a QR code containing only the ticket code.
 		qr = qrcode.QRCode(
@@ -236,7 +244,7 @@ class TicketPDFView(APIView):
 			id=id
 		)
 
-		if ticket.status == Ticket.Status.CANCELLED:
+		if ticket.status == Ticket.Status.CANCELLED or ticket.order_item.order.is_deleted:
 			return Response(
 				{
 					'success': False,
@@ -245,7 +253,7 @@ class TicketPDFView(APIView):
 				status=status.HTTP_400_BAD_REQUEST
 			)
 
-		if ticket.order_item.order.status != 'confirmed':
+		if ticket.order_item.order.is_deleted or ticket.order_item.order.status != 'confirmed':
 			return Response(
 				{
 					'success': False,
@@ -266,6 +274,16 @@ class TicketPDFView(APIView):
 		)
 
 		return response
+
+
+class TicketCancelView(APIView):
+	permission_classes = [IsEventManager]
+
+	def post(self, request, id):
+		ticket = get_object_or_404(Ticket, pk=id)
+		ticket = cancel_ticket(ticket.pk, request.user, request.data.get('reason', ''))
+		return Response(TicketDetailSerializer(ticket).data, status=status.HTTP_200_OK)
+
 
 class TicketDeliveryListView(generics.ListAPIView):
 	serializer_class = TicketDeliverySerializer
@@ -313,6 +331,9 @@ class TicketDeliveryRetryView(generics.GenericAPIView):
 	def post(self, request, *args, **kwargs):
 		delivery = self.get_object()
 
+		if delivery.order.is_deleted:
+			raise ValidationError({'delivery': 'Tickets cannot be emailed for a deleted order.'})
+
 		if delivery.status == TicketDelivery.Status.SENT:
 			raise ValidationError({
 				'delivery': 'This order\'s tickets have already been emailed.'
@@ -320,7 +341,7 @@ class TicketDeliveryRetryView(generics.GenericAPIView):
 
 		if (
 			delivery.status == TicketDelivery.Status.PENDING
-			and delivery.attemps == 0
+			and delivery.attempts == 0
 		):
 			raise ValidationError({
 				'delivery': 'No previous delivery attempt exists.'

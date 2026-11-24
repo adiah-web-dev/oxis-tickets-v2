@@ -8,12 +8,18 @@ import { fetchAll } from "./normalize";
  */
 export async function getDashboard(eventId) {
   const filter = eventId ? { event: eventId } : {};
-  const [orders, tickets] = await Promise.all([
+  const [orders, tickets, payments] = await Promise.all([
     fetchAll("/api/orders/", filter),
     fetchAll("/api/tickets/", filter),
+    fetchAll("/api/payments/"),
   ]);
 
-  const confirmed = orders.filter((o) => o.status === "confirmed");
+  const revenuePayments = payments.filter(
+    (p) =>
+      p.status === "verified" &&
+      !p.is_voided &&
+      (!eventId || String(p.order_event) === String(eventId)),
+  );
   const activeTickets = tickets.filter((t) => t.status !== "cancelled");
   const used = activeTickets.filter((t) => t.status === "used").length;
 
@@ -27,11 +33,11 @@ export async function getDashboard(eventId) {
     const bucket = days.get(t.issued_at?.slice(0, 10));
     if (bucket) bucket.tickets += 1;
   });
-  confirmed.forEach((o) => {
+  revenuePayments.forEach((p) => {
     const bucket = days.get(
-      o.updated_at?.slice(0, 10) ?? o.created_at.slice(0, 10),
+      p.verified_at?.slice(0, 10) ?? p.received_at?.slice(0, 10),
     );
-    if (bucket) bucket.revenue += toNumber(o.total);
+    if (bucket) bucket.revenue += toNumber(p.amount);
   });
 
   return {
@@ -40,7 +46,7 @@ export async function getDashboard(eventId) {
     total_tickets: activeTickets.length,
     checked_in: used,
     remaining: activeTickets.length - used,
-    revenue: confirmed.reduce((sum, o) => sum + toNumber(o.total), 0),
+    revenue: revenuePayments.reduce((sum, p) => sum + toNumber(p.amount), 0),
     sales_over_time: Array.from(days.entries()).map(([date, v]) => ({
       date,
       ...v,

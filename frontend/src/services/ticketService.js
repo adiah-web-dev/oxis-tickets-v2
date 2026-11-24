@@ -95,3 +95,11 @@ export async function getTicketPdf(id) {
     return rethrowBlobError(error);
   }
 }
+
+/** POST /api/tickets/{id}/cancel/ — event managers only. */
+export async function cancelTicket(id, reason = "") {
+  const { data } = await apiClient.post(`/api/tickets/${id}/cancel/`, {
+    reason,
+  });
+  return data;
+}

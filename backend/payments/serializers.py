@@ -34,6 +34,9 @@ class CreatePaymentSerializer(serializers.ModelSerializer):
 	def validate(self, attrs):
 		order = attrs['order']
 
+		if order.is_deleted:
+			raise serializers.ValidationError({'order': 'Deleted orders cannot receive payments.'})
+
 		if order.status != 'pending':
 			raise serializers.ValidationError({
 				'order': 'Payments can only be recorded against pending orders.'
@@ -54,13 +57,18 @@ class PaymentDetailSerializer(serializers.ModelSerializer):
 		source='order.order_number',
 		read_only=True
 	)
+	order_event = serializers.IntegerField(source='order.event_id', read_only=True)
 	received_by_email = serializers.EmailField(
 		source='received_by.email',
 		read_only=True
 	)
 	verified_by_email = serializers.EmailField(
 		source='verified_by.email',
-		read_only=True
+		read_only=True,
+		allow_null=True,
+	)
+	voided_by_email = serializers.EmailField(
+		source='voided_by.email', read_only=True, allow_null=True
 	)
 
 	class Meta:
@@ -69,6 +77,7 @@ class PaymentDetailSerializer(serializers.ModelSerializer):
 			'id',
 			'order',
 			'order_number',
+			'order_event',
 			'amount',
 			'method',
 			'reference',
@@ -79,4 +88,8 @@ class PaymentDetailSerializer(serializers.ModelSerializer):
 			'received_at',
 			'verified_at',
 			'updated_at',
+			'is_voided',
+			'voided_at',
+			'voided_by_email',
+			'voided_reason',
 		]

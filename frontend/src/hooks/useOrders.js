@@ -12,6 +12,7 @@ import {
   createOrder,
   getOrder,
   listOrders,
+  softDeleteOrder,
 } from "../services/orderService";
 
 export function useOrders(params, options = {}) {
@@ -70,6 +71,23 @@ export function useCancelOrder() {
     },
     onError: (error) =>
       toast.error("Order could not be cancelled", {
+        description: getApiErrorMessage(error),
+      }),
+  });
+}
+
+export function useSoftDeleteOrder() {
+  const invalidate = useInvalidateOrderWorkflow();
+  return useMutation({
+    mutationFn: ({ id, reason }) => softDeleteOrder(id, reason),
+    onSuccess: (_data, variables) => {
+      invalidate(variables.id);
+      toast.success("Order deleted", {
+        description: "Its tickets were cancelled and its payments were voided.",
+      });
+    },
+    onError: (error) =>
+      toast.error("Order could not be deleted", {
         description: getApiErrorMessage(error),
       }),
   });

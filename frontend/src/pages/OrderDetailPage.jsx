@@ -6,6 +6,7 @@ import {
   Mail,
   Phone,
   Ticket as TicketIcon,
+  Trash2,
   User,
 } from "lucide-react";
 import { useState } from "react";
@@ -37,7 +38,11 @@ import {
   TableRow,
 } from "../components/ui/Table";
 import { useAuth } from "../contexts/AuthContext";
-import { useCancelOrder, useOrder } from "../hooks/useOrders";
+import {
+  useCancelOrder,
+  useOrder,
+  useSoftDeleteOrder,
+} from "../hooks/useOrders";
 import { useOrderPayments } from "../hooks/usePayments";
 import { useAllTickets } from "../hooks/useTickets";
 import { getHttpStatus } from "../lib/errors";
@@ -53,10 +58,12 @@ export function OrderDetailPage() {
   const payments = useOrderPayments(id, { enabled: can("viewPayments") });
   const tickets = useAllTickets(
     { order: id ?? undefined },
-    { enabled: !!id && order?.status === "confirmed" },
+    { enabled: !!id && order?.status === "confirmed" && !order?.is_deleted },
   );
   const cancel = useCancelOrder();
+  const softDelete = useSoftDeleteOrder();
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [viewing, setViewing] = useState(null);
 
   if (isLoading) {
@@ -101,7 +108,7 @@ export function OrderDetailPage() {
       (t) => t.order_number === order.order_number,
     ) ?? [];
   const hasPayment = (payments.data ?? []).some(
-    (p) => p.status === "pending" || p.status === "verified",
+    (p) => !p.is_voided && (p.status === "pending" || p.status === "verified"),
   );
   const confirmed = order.status === "confirmed";
   const steps = [
@@ -140,18 +147,39 @@ export function OrderDetailPage() {
             <span>Created {formatDateTime(order.created_at)}</span>
           </p>
         </div>
-        {can("cancelOrders") && order.status !== "cancelled" && (
-          <Button
-            variant="outline"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
-            onClick={() => setConfirmCancel(true)}
-          >
-            <Ban className="size-4" aria-hidden /> Cancel order
-          </Button>
+        {can("cancelOrders") && !order.is_deleted && (
+          <div className="flex flex-wrap gap-2">
+            {order.status !== "cancelled" && (
+              <Button variant="outline" onClick={() => setConfirmCancel(true)}>
+                <Ban className="size-4" aria-hidden /> Cancel order
+              </Button>
+            )}
+            {can("verifyPayments") && (
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="size-4" aria-hidden /> Delete order
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
-      {order.status !== "cancelled" && <OrderProgress steps={steps} />}
+      {order.is_deleted && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <p className="font-semibold">This order has been deleted.</p>
+          <p>
+            All tickets have been cancelled and all payments have been voided.
+          </p>
+          {order.deletion_reason && (
+            <p className="mt-1">Reason: {order.deletion_reason}</p>
+          )}
+        </div>
+      )}
+      {!order.is_deleted && order.status !== "cancelled" && (
+        <OrderProgress steps={steps} />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -341,6 +369,36 @@ export function OrderDetailPage() {
         isPending={cancel.isPending}
         onConfirm={() =>
           cancel.mutate(order.id, { onSettled: () => setConfirmCancel(false) })
+        }
+      />
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Delete order ${order.order_number}?`}
+        description="This permanently hides the order from the active order list, cancels every ticket, and voids every payment (including verified payments). The records remain available for audit. This cannot be undone."
+        confirmLabel="Delete order"
+        destructive
+        isPending={softDelete.isPending}
+        onConfirm={() =>
+          softDelete.mutate(
+            { id: order.id, reason: "Order deleted by administrator." },
+            { onSettled: () => setConfirmDelete(false) },
+          )
+        }
+      />
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Delete order ${order.order_number}?`}
+        description="This permanently hides the order from the active order list, cancels every ticket, and voids every payment (including verified payments). The records remain available for audit. This cannot be undone."
+        confirmLabel="Delete order"
+        destructive
+        isPending={softDelete.isPending}
+        onConfirm={() =>
+          softDelete.mutate(
+            { id: order.id, reason: "Order deleted by administrator." },
+            { onSettled: () => setConfirmDelete(false) },
+          )
         }
       />
       <TicketDetailDialog

@@ -38,3 +38,11 @@ export async function rejectPayment(id) {
   const { data } = await apiClient.post(`/api/payments/${id}/reject/`);
   return data;
 }
+
+/** POST /api/payments/{id}/void/ — event managers only. */
+export async function voidPayment(id, reason = "") {
+  const { data } = await apiClient.post(`/api/payments/${id}/void/`, {
+    reason,
+  });
+  return data;
+}

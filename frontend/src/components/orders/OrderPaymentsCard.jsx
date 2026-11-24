@@ -37,16 +37,17 @@ export function OrderPaymentsCard({ order, openRecordOnLoad }) {
 
   const total = toNumber(order.total);
   const verified = (payments ?? [])
-    .filter((p) => p.status === "verified")
+    .filter((p) => p.status === "verified" && !p.is_voided)
     .reduce((s, p) => s + toNumber(p.amount), 0);
   const pending = (payments ?? [])
-    .filter((p) => p.status === "pending")
+    .filter((p) => p.status === "pending" && !p.is_voided)
     .reduce((s, p) => s + toNumber(p.amount), 0);
   const outstanding = Math.max(0, total - verified - pending);
   const expired = order.status === "pending" && isPastDate(order.expires_at);
   const canRecord =
     can("recordPayments") &&
     order.status === "pending" &&
+    !order.is_deleted &&
     !expired &&
     outstanding > 0;
 
@@ -122,18 +123,24 @@ export function OrderPaymentsCard({ order, openRecordOnLoad }) {
                       </span>
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatDateTime(p.created_at)}
+                      {formatDateTime(p.received_at)}
                       {p.reference && ` · Ref ${p.reference}`}
                     </p>
                     {p.notes && (
                       <p className="mt-0.5 text-xs text-slate-600">{p.notes}</p>
                     )}
                   </div>
-                  <StatusBadge {...paymentStatusMeta[p.status]} />
+                  {p.is_voided ? (
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                      Voided
+                    </span>
+                  ) : (
+                    <StatusBadge {...paymentStatusMeta[p.status]} />
+                  )}
                 </div>
-                {p.status === "pending" && can("verifyPayments") && (
-                  <PaymentReviewActions payment={p} />
-                )}
+                {p.status === "pending" &&
+                  !p.is_voided &&
+                  can("verifyPayments") && <PaymentReviewActions payment={p} />}
               </li>
             ))}
           </ul>

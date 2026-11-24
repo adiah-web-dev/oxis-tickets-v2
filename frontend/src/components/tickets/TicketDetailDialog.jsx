@@ -1,4 +1,5 @@
 import {
+  Ban,
   CheckCircle2,
   Download,
   FileText,
@@ -8,8 +9,13 @@ import {
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { openTicketPdf, useTicket } from "../../hooks/useTickets";
+import {
+  openTicketPdf,
+  useCancelTicket,
+  useTicket,
+} from "../../hooks/useTickets";
 import { formatDateTime } from "../../lib/format";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { ErrorState } from "../common/ErrorState";
 import { Button } from "../ui/Button";
 import {
@@ -27,6 +33,8 @@ export function TicketDetailDialog({ ticketId, onOpenChange }) {
   const { data: ticket, isLoading, error, refetch } = useTicket(ticketId);
   const { can } = useAuth();
   const [pdfBusy, setPdfBusy] = useState(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancelTicket = useCancelTicket();
 
   const handlePdf = async (mode) => {
     if (!ticket) return;
@@ -100,7 +108,15 @@ export function TicketDetailDialog({ ticketId, onOpenChange }) {
                 <Receipt className="size-4" aria-hidden /> Find order
               </Link>
             </Button>
-            {can("downloadTickets") && (
+            {can("verifyPayments") && ticket.status !== "cancelled" && (
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmCancel(true)}
+              >
+                <Ban className="size-4" aria-hidden /> Cancel ticket
+              </Button>
+            )}
+            {can("downloadTickets") && ticket.status !== "cancelled" && (
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -126,6 +142,21 @@ export function TicketDetailDialog({ ticketId, onOpenChange }) {
             )}
           </DialogFooter>
         )}
+        <ConfirmDialog
+          open={confirmCancel}
+          onOpenChange={setConfirmCancel}
+          title="Cancel this ticket?"
+          description="The ticket will remain in the records but its QR code will no longer be accepted at check-in."
+          confirmLabel="Cancel ticket"
+          destructive
+          isPending={cancelTicket.isPending}
+          onConfirm={() =>
+            cancelTicket.mutate(
+              { id: ticket.id, reason: "Ticket invalidated by administrator." },
+              { onSettled: () => setConfirmCancel(false) },
+            )
+          }
+        />
       </DialogContent>
     </Dialog>
   );

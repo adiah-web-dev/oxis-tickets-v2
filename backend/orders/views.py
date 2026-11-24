@@ -8,9 +8,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
-from accounts.permissions import IsEventManagerOrCashier
+from accounts.permissions import IsEventManager, IsEventManagerOrCashier
 
 from .models import Order
+from .services import soft_delete_order
 from .serializers import (
 	CreateOrderSerializer,
 	OrderDetailSerializer,
@@ -62,12 +63,14 @@ class OrderListView(generics.ListAPIView):
 	ordering = ['-created_at']
 
 	def get_queryset(self):
-		return(
+		queryset = (
 			Order.objects
 			.select_related('event', 'created_by')
 			.prefetch_related('items', 'items__ticket_type')
-			.all()
 		)
+		if self.request.query_params.get('include_deleted') != 'true':
+			queryset = queryset.filter(is_deleted=False)
+		return queryset
 
 class OrderDetailView(generics.RetrieveAPIView):
 	serializer_class = OrderDetailSerializer
@@ -82,6 +85,16 @@ class OrderDetailView(generics.RetrieveAPIView):
 			.prefetch_related('items', 'items__ticket_type')
 		)
 
+
+class OrderSoftDeleteView(APIView):
+	permission_classes = [IsEventManager]
+
+	def post(self, request, id):
+		order = get_object_or_404(Order, pk=id)
+		order = soft_delete_order(order.pk, request.user, request.data.get('reason', ''))
+		return Response(OrderDetailSerializer(order).data, status=status.HTTP_200_OK)
+
+
 class OrderCancelView(APIView):
 	permission_classes = [IsEventManagerOrCashier]
 
@@ -93,6 +106,9 @@ class OrderCancelView(APIView):
 			.prefetch_related('items', 'items__ticket_type'),
 			id=id
 		)
+
+		if order.is_deleted:
+			return Response({'detail': 'This order has been deleted.'}, status=status.HTTP_400_BAD_REQUEST)
 
 		if order.status == Order.Status.CANCELLED:
 			return Response(
